@@ -19,41 +19,41 @@ public struct TestShape : IBoundingHierarchyNode, IEquatable<TestShape>, ICompar
     //public unsafe NativeHull* Hull;//最关键是这个，这个图形的顶点数据，面法线，有效边数据
     public NativeHull Hull;
 
-    public BoundingBox BoundingBox;
-    public BoundingSphere BoundingSphere;
+    public BoundingBox BoundingBox;//BVH时候用的
+    public BoundingSphere BoundingSphere;//BVH时候用的
 
     public bool HasChanged => true;//估计是临时的，应该是有发生坐标变更时候返回true
 
-    public float3 Position => Transform.pos;
+    public float3 Position => Transform.pos;//BVH时候用的
 
-    public float Radius => BoundingSphere.radius;
+    public float Radius => BoundingSphere.radius;//BVH时候用的
 
     public bool Equals(TestShape other)
     {
         return Id == other.Id;
     }
 
-    public override bool Equals(object obj)
-    {
-        return obj is TestShape shape && shape.Equals(this);
-    }
+    //public override bool Equals(object obj)
+    //{
+    //    return obj is TestShape shape && shape.Equals(this);
+    //}
 
     public int CompareTo(TestShape other)//比较大小，用id来确定哪个大？？ 估计是为了实现IComparable占位的，用来排序时候比较
     {
         return Id.CompareTo(other.Id);
     }
 
-    public override int GetHashCode()
-    {
-        return Id;
-    }
+    //public override int GetHashCode()
+    //{
+    //    return Id;
+    //}
 
-    public void OnUpdate()
+    public void OnUpdate()//BVH时候用的
     {
             
     }
 
-    public void OnTransformChanged()
+    public void OnTransformChanged()//BVH时候用的
     {
             
     }

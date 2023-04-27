@@ -6,6 +6,7 @@ using System.Collections;
 
 namespace Vella.Common
 {
+    //封装2维数组压平到1维
     public struct NativeArray2D<T> : IDisposable, IEnumerable<T> where T : unmanaged
     {
         public NativeArray<T> Internal;

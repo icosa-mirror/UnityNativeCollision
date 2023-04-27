@@ -240,7 +240,7 @@ public class HullTester : MonoBehaviour
     private void HandleTransformChanged()
     {
         var transforms = Transforms.ToList().Distinct().Where(t => t.gameObject.activeSelf).ToList();
-        var newTransformFound = false;
+        //var newTransformFound = false;
         var transformCount = 0;
 
         if (Hulls != null)
@@ -256,7 +256,7 @@ public class HullTester : MonoBehaviour
                 var foundNewHull = !Hulls.ContainsKey(t.GetInstanceID());
                 if (foundNewHull)
                 {
-                    newTransformFound = true;
+                    //newTransformFound = true;
                     break;
                 }
             }

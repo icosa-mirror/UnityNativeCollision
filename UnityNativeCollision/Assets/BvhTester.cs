@@ -120,7 +120,7 @@ public class BvhTester : MonoBehaviour
                 //    }
                 //}
 
-                if (!bucket.IsCreated)
+                if (!bucket.IsCreated)//editor回退时候这里有空指针的问题，要研究下作者这个NativeBuffer和NativeArray为什么不能用，怎么会拿出来一个空的struct
                     continue;
 
                 for (int j = 0; j < bucket.Length; j++)
