@@ -134,6 +134,7 @@ public class HullTester : MonoBehaviour
             {
                 hulls.Add(b);
             }
+            //结果是跟输入的一样长度，5个多边形两两碰撞，出来的结果也是5个两两关系
             var results = new UnsafeList<BatchCollisionResult>(batchInput.Length, Allocator.TempJob);//2022不予许NativeArray<NativeArray> 要用UnsafeList套UnsafeList
             
                 var sw3 = System.Diagnostics.Stopwatch.StartNew();

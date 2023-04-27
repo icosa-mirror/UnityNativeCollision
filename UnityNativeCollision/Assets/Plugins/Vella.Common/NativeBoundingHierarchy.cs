@@ -71,8 +71,18 @@ namespace Vella.Common
             OptimizationQueued = 1
         }
     }
+    /*
+     
+    unmanaged 关于这个约束关键词，不支持与 struct、class、 new() 约束共用，它所支持的类型包括以下几点：
 
-    public unsafe class NativeBoundingHierarchy<T> : IDisposable where T : struct, IBoundingHierarchyNode, IEquatable<T>
+类型为 sbyte、byte、short、ushort、int、uint、long、ulong、char、float、double、decimal、bool、IntPtr 或 UIntPtr。
+可以是枚举类型。
+可以是指针类型。
+可以是符合非托管约束的自定义结构。可以自定义struct，但是不能有引用类型的成员变量
+     */
+
+    //更改约束 where T : struct 改成 unmanaged  为了 UnsafeList<T> 的约束限制要求  并且又要用T泛型
+    public unsafe class NativeBoundingHierarchy<T> : IDisposable where T : unmanaged, IBoundingHierarchyNode, IEquatable<T>
     {
         public delegate bool NodeTest(BoundingBox box);
 
@@ -94,7 +104,15 @@ namespace Vella.Common
         /// <summary>
         /// Allows finding a leaf associated with a particular <typeparamref name="T"/> object.
         /// </summary>
-        private NativeHashMap<T, Node> _map;
+        //private NativeHashMap<T, Node> _map;//2022 collection 不能NativeHashMap<NativeArray, Node>  NativeHashMap<struct, Node> struct里面有NativeArray也不行
+                                            //used in native collection is not blittable, not primitive, or contains a type tagged as NativeContainer
+        /*
+         目前做法，把_map分拆两个UnsafeList，通过下标映射
+         
+         */
+
+        private UnsafeList<T> _mapKes;
+        private UnsafeList<Node> _mapVals;
 
         /// <summary>
         /// Storage for all the <typeparamref name="T"/> objects, each group is linked to a leaf node via <see cref="_map"/>.
@@ -123,8 +141,10 @@ namespace Vella.Common
             // WARNING! currently this must be 1 to use dynamic BVH updates
             _maxLeaves = maxPerLeft;
 
-            _map = new NativeHashMap<T, Node>(MaxNodes, Allocator.Persistent);//2022 collection 不能NativeHashMap<NativeArray, Node>  NativeHashMap<struct, Node> struct里面有NativeArray也不行
-                                                                              //used in native collection is not blittable, not primitive, or contains a type tagged as NativeContainer
+            //_map = new NativeHashMap<T, Node>(MaxNodes, Allocator.Persistent);
+            _mapKes = new UnsafeList<T>(MaxNodes, Allocator.Persistent);
+            _mapVals = new UnsafeList<Node>(MaxNodes, Allocator.Persistent);
+
             _nodes = new NativeBuffer<Node>(MaxNodes, Allocator.Persistent);
             _unusedBucketIndices = new NativeBuffer<int>(MaxBuckets, Allocator.Persistent);
             _unusedNodeIndices = new NativeBuffer<int>(MaxBuckets, Allocator.Persistent);
@@ -164,9 +184,17 @@ namespace Vella.Common
                 _nodes.Dispose();
             }
 
-            if (_map.IsCreated)
+            //if (_map.IsCreated)
+            //{
+            //    _map.Dispose();
+            //}
+            if (_mapKes.IsCreated)
             {
-                _map.Dispose();
+                _mapKes.Dispose();
+            }
+            if (_mapVals.IsCreated)
+            {
+                _mapVals.Dispose();
             }
         }        
 
@@ -257,7 +285,13 @@ namespace Vella.Common
         /// <param name="item"></param>
         public void UnmapLeaf(T item)
         {
-            _map.Remove(item);
+            //_map.Remove(item);
+            var index = _mapKes.IndexOf(item);
+            if (index != -1)
+            {
+                _mapKes.RemoveAt(index);
+                _mapVals.RemoveAt(index);
+            }
         }
 
         /// <summary>
@@ -267,8 +301,12 @@ namespace Vella.Common
         {
             // todo: efficient move/replace method for NativeHashMap
 
-            _map.Remove(item);
-            _map.TryAdd(item, node);
+            //_map.Remove(item);
+            //_map.TryAdd(item, node);
+
+            UnmapLeaf(item);
+            _mapKes.AddNoResize(item);
+            _mapVals.AddNoResize(node);
         }
 
         /// <summary>
@@ -278,7 +316,15 @@ namespace Vella.Common
         {
             // todo ContainsKey method for map;
 
-            return _map.TryGetValue(item, out node);
+            //return _map.TryGetValue(item, out node);
+            var index = _mapKes.IndexOf(item);
+            if (index != -1)
+            {
+                node = _mapVals[index];
+                return true;
+            }
+            node = default;
+            return false;
         }
 
         public bool QueueForOptimize(T item)

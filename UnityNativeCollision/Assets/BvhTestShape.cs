@@ -10,7 +10,14 @@ public struct TestShape : IBoundingHierarchyNode, IEquatable<TestShape>, ICompar
     public int Id;
 
     public RigidTransform Transform;
-    public NativeHull Hull;//最关键是这个，这个图形的顶点数据，面法线，有效边数据
+
+    //2022 collection 不能NativeHashMap<NativeArray, Node>  NativeHashMap<struct, Node> struct里面有NativeArray也不行
+    //2022不予许NativeArray<NativeArray> 要用UnsafeList套UnsafeList
+    //要不改成struct包着指针，就可以满足上面两个容器
+    ///对于目前源码改动很大，并且很多地方访问Hull的要注意堆上指针fixed，写代码也比较麻烦
+    ///算了，以后的设计时候要注意
+    //public unsafe NativeHull* Hull;//最关键是这个，这个图形的顶点数据，面法线，有效边数据
+    public NativeHull Hull;
 
     public BoundingBox BoundingBox;
     public BoundingSphere BoundingSphere;

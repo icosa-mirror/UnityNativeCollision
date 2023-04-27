@@ -40,19 +40,19 @@ public class BvhTester : MonoBehaviour
     void Update()
     {
         //可以struct里面有NativeArray* 包一个指针就行
-        unsafe
-        {
-            NativeHashMap<TestStructHasNativeArrayPoint, Node> _map = new NativeHashMap<TestStructHasNativeArrayPoint, Node>(0, Allocator.Temp);
-            
-        }
+        //unsafe
+        //{
+        //    NativeHashMap<TestStructHasNativeArrayPoint, Node> _map = new NativeHashMap<TestStructHasNativeArrayPoint, Node>(0, Allocator.Temp);
 
-        //CheckInputForChanges(Transforms);
+        //}
 
-        //UpdateChangedTransforms();
+        CheckInputForChanges(Transforms);
 
-        //DrawBvh();
+        UpdateChangedTransforms();
 
-        //ProcessEditorActions();
+        DrawBvh();
+
+        ProcessEditorActions();
     }
 
     private void ProcessEditorActions()
