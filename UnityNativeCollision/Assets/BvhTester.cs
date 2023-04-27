@@ -8,10 +8,21 @@ using Vella.Common;
 using Vella.UnityNativeHull;
 using BoundingSphere = Vella.Common.BoundingSphere;
 using Debug = UnityEngine.Debug;
+using Unity.Collections;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
+//2022  测试struct包指针，放到NativeHashMap 是可以的
+unsafe struct TestStructHasNativeArrayPoint: IEquatable<TestStructHasNativeArrayPoint>
+{
+    public NativeArrayNoLeakDetection<float3>* p;
+
+    public bool Equals(TestStructHasNativeArrayPoint other)
+    {
+        return true;
+    }
+}
 
 [ExecuteInEditMode]
 public class BvhTester : MonoBehaviour
@@ -28,13 +39,20 @@ public class BvhTester : MonoBehaviour
 
     void Update()
     {
-        CheckInputForChanges(Transforms);
+        //可以struct里面有NativeArray* 包一个指针就行
+        unsafe
+        {
+            NativeHashMap<TestStructHasNativeArrayPoint, Node> _map = new NativeHashMap<TestStructHasNativeArrayPoint, Node>(0, Allocator.Temp);
+            
+        }
 
-        UpdateChangedTransforms();
+        //CheckInputForChanges(Transforms);
 
-        DrawBvh();
+        //UpdateChangedTransforms();
 
-        ProcessEditorActions();
+        //DrawBvh();
+
+        //ProcessEditorActions();
     }
 
     private void ProcessEditorActions()

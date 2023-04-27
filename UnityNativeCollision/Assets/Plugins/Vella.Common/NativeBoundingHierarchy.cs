@@ -123,7 +123,8 @@ namespace Vella.Common
             // WARNING! currently this must be 1 to use dynamic BVH updates
             _maxLeaves = maxPerLeft;
 
-            _map = new NativeHashMap<T, Node>(MaxNodes, Allocator.Persistent);
+            _map = new NativeHashMap<T, Node>(MaxNodes, Allocator.Persistent);//2022 collection 不能NativeHashMap<NativeArray, Node>  NativeHashMap<struct, Node> struct里面有NativeArray也不行
+                                                                              //used in native collection is not blittable, not primitive, or contains a type tagged as NativeContainer
             _nodes = new NativeBuffer<Node>(MaxNodes, Allocator.Persistent);
             _unusedBucketIndices = new NativeBuffer<int>(MaxBuckets, Allocator.Persistent);
             _unusedNodeIndices = new NativeBuffer<int>(MaxBuckets, Allocator.Persistent);
@@ -1491,9 +1492,9 @@ namespace Vella.Common
         /// <summary>
         /// Sort function that asks T object for a position and compares on a particular axis.
         /// </summary>
-        public struct NodePositionAxisComparer<T> : IComparer<T, Axis> where T : struct, IBoundingHierarchyNode, IEquatable<T>
+        public struct NodePositionAxisComparer<Ti> : IComparer<Ti, Axis> where Ti : struct, IBoundingHierarchyNode, IEquatable<Ti>
         {
-            public int Compare(T a, T b, Axis axis)
+            public int Compare(Ti a, Ti b, Axis axis)
             {
                 var posA = a.Position;
                 var posB = b.Position;
@@ -1503,7 +1504,7 @@ namespace Vella.Common
                     case Axis.Y: return posA.y < posB.y ? -1 : posA.y > posB.y ? 1 : 0;
                     case Axis.Z: return posA.z < posB.z ? -1 : posA.z > posB.z ? 1 : 0;
                 }
-                throw new InvalidOperationException(nameof(NodePositionAxisComparer<T>) + " - Unsupported Axis: " + axis);
+                throw new InvalidOperationException(nameof(NodePositionAxisComparer<Ti>) + " - Unsupported Axis: " + axis);
             }
         }
 
