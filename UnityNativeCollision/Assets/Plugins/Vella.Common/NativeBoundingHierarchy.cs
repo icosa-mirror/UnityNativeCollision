@@ -305,8 +305,8 @@ namespace Vella.Common
             //_map.TryAdd(item, node);
 
             UnmapLeaf(item);
-            _mapKes.AddNoResize(item);
-            _mapVals.AddNoResize(node);
+            _mapKes.Add(item);
+            _mapVals.Add(node);
         }
 
         /// <summary>

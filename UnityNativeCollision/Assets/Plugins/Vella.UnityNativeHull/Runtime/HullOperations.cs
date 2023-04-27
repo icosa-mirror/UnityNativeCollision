@@ -135,8 +135,7 @@ namespace Vella.UnityNativeHull
                         if (HullCollision.IsColliding(a.Transform, a.Hull, b.Transform, b.Hull))
                         {
                             isCollision = true;
-                            //Add -> AddNoResize  外面逻辑的results 是分配好长度固定没必要增加的时候变长，减少开销
-                            results.ListData->AddNoResize(new BatchCollisionResult
+                            results.ListData->Add(new BatchCollisionResult
                             {
                                 A = a,
                                 B = b,
@@ -162,7 +161,7 @@ namespace Vella.UnityNativeHull
                         if (HullCollision.IsColliding(a.Transform, a.Hull, b.Transform, b.Hull))
                         {
                             isCollision = true;
-                            results->ListData->AddNoResize(new BatchCollisionResult
+                            results->ListData->Add(new BatchCollisionResult
                             {
                                 A = a,
                                 B = b,

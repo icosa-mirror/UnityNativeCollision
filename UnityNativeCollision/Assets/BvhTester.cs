@@ -113,6 +113,13 @@ public class BvhTester : MonoBehaviour
             for (int i = 0; i < _bvh.Buckets.Length; i++)
             {
                 ref NativeBuffer<TestShape> bucket = ref _bvh.Buckets[i];
+                //unsafe {
+                //    fixed (NativeBuffer<TestShape>* bucketPoint = &bucket)
+                //    {
+                //        if (bucketPoint == null) continue;
+                //    }
+                //}
+
                 if (!bucket.IsCreated)
                     continue;
 
