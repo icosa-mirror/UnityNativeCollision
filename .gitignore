@@ -22,3 +22,6 @@ UnityNativeCollision/.vs/
 sysinfo.txt
 
 UnityProject/\.vs/
+
+Logs
+.vsconfig

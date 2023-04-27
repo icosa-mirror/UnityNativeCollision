@@ -15,6 +15,8 @@ using Random = Unity.Mathematics.Random;
 using UnityEditor;
 #endif
 
+using Unity.Collections.LowLevel.Unsafe;
+
 [ExecuteInEditMode]
 public class HullTester : MonoBehaviour
 {
@@ -30,12 +32,12 @@ public class HullTester : MonoBehaviour
     public bool DrawClosestPoint;
 
     [Header("Console Logging")]
-    public bool LogCollisions;
-    public bool LogClosestPoint;
-    public bool LogContact;
+    public bool LogCollisions;///打印相交的情况
+    public bool LogClosestPoint;//离世界0，0点的距离
+    public bool LogContact;//两两的接触点
 
     private Dictionary<int, TestShape> Hulls;
-    private Dictionary<int, GameObject> GameObjects;
+    private Dictionary<int, GameObject> GameObjects;//用来打印go名等
 
     void Update()
     {
@@ -59,7 +61,7 @@ public class HullTester : MonoBehaviour
             if (LogClosestPoint)
             {
                 var sw3 = System.Diagnostics.Stopwatch.StartNew();
-                var result3 = HullCollision.ClosestPoint(transformA, hullA, 0);
+                var result3 = HullCollision.ClosestPoint(transformA, hullA, 0);//非burst的耗时
                 sw3.Stop();
 
                 var sw4 = System.Diagnostics.Stopwatch.StartNew();
@@ -93,7 +95,7 @@ public class HullTester : MonoBehaviour
                 if (LogCollisions)
                 {
                     var sw1 = System.Diagnostics.Stopwatch.StartNew();
-                    var result1 = HullCollision.IsColliding(transformA, hullA, transformB, hullB);
+                    var result1 = HullCollision.IsColliding(transformA, hullA, transformB, hullB);//逐个job调用两两碰撞
                     sw1.Stop();
 
                     var sw2 = System.Diagnostics.Stopwatch.StartNew();
@@ -107,7 +109,7 @@ public class HullTester : MonoBehaviour
             }
         }
 
-        if(LogCollisions)
+        if(LogCollisions)//一个job调用全部两两碰撞
         {
             TestBatchCollision();
         }
@@ -122,24 +124,35 @@ public class HullTester : MonoBehaviour
             Hull = t.Value.Hull,
 
         }).ToArray();
+        //var aaa = new UnsafeList<BatchCollisionInput>(0, Allocator.TempJob);
+        //using (var b = new Unity.Collections.LowLevel.Unsafe.UnsafeList<NativeArrayNoLeakDetection<float3>>(1, Allocator.TempJob)); 
 
-        using (var hulls = new NativeArray<BatchCollisionInput>(batchInput, Allocator.TempJob))
-        using (var results = new NativeList<BatchCollisionResult>(batchInput.Length, Allocator.TempJob))
-        {
-            var sw3 = System.Diagnostics.Stopwatch.StartNew();
-            var collisions = HullOperations.CollisionBatch.Invoke(hulls, results);
-            sw3.Stop();
-
-            Debug.Log($"Batch Collisions took {sw3.Elapsed.TotalMilliseconds:N4}ms ({results.Length} collisions from {hulls.Length} hulls)");
-
-            if (collisions)
+        //这些new的UnsafeList，都是托管栈上，里面的数据就是非托管，这样都没gc。如果UnsafeList是这个class的成员变量，就是托管堆上
+        var hulls = new UnsafeList<BatchCollisionInput>(0, Allocator.TempJob);
+        
+            foreach (var b in batchInput)
             {
-                foreach (var result in results.AsArray())
-                {
-                    Debug.Log($" > {GameObjects[result.A.Id].name} collided with {GameObjects[result.B.Id].name}");
-                }
+                hulls.Add(b);
             }
-        }
+            var results = new UnsafeList<BatchCollisionResult>(batchInput.Length, Allocator.TempJob);//2022不予许NativeArray<NativeArray> 要用UnsafeList套UnsafeList
+            
+                var sw3 = System.Diagnostics.Stopwatch.StartNew();
+                var collisions = HullOperations.CollisionBatch.Invoke(ref hulls, ref results);//2022改了UnsafeList是值拷贝传递了，所以要加ref，避免job修改后，这里再访问results值就是旧的
+                //2019是默认引用传递的，应该后面unity修改了底层机制,也有可能是NativeArray是默认引用传递，UnsafeList是指传递？这个unity修改搞到很晕
+                sw3.Stop();
+
+                Debug.Log($"Batch Collisions took {sw3.Elapsed.TotalMilliseconds:N4}ms ({results.Length} collisions from {hulls.Length} hulls)");
+
+                if (collisions)
+                {
+                    for (int i = 0; i < results.Length; i++)
+                    {
+                        var result = results[i];
+                        Debug.Log($" > {GameObjects[result.A.Id].name} collided with {GameObjects[result.B.Id].name}");
+                    }
+                }
+        results.Dispose();
+        hulls.Dispose();
     }
 
     public void DrawHullCollision(GameObject a, GameObject b, RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
@@ -248,8 +261,8 @@ public class HullTester : MonoBehaviour
                 }
             }
 
-            if (!newTransformFound && transformCount == Hulls.Count)
-                return;
+            //if (!newTransformFound && transformCount == Hulls.Count)//没有多新增的测试多边形物体也要更新，因为会拖来拖去变更坐标
+            //    return;
         }
 
         Debug.Log("Rebuilding Objects");

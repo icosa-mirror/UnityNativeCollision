@@ -26,7 +26,7 @@ namespace Vella.Common
 
     public interface IBurstFunction<T1, T2, TResult> : IBurstOperation
     {
-        TResult Execute(T1 arg1, T2 arg2);
+        TResult Execute(ref T1 arg1, ref T2 arg2);//关键要ref，2022之后被修改为默认值传递
     }
 
     public interface IBurstFunction<T1, TResult> : IBurstOperation
@@ -214,15 +214,15 @@ namespace Vella.Common
         public unsafe void Execute()
         {
             UnsafeUtility.CopyPtrToStructure(ResultPtr, out TResult result);
-            UnsafeUtility.CopyPtrToStructure(FunctionPtr, out TFunc func);
-            UnsafeUtility.CopyPtrToStructure(Argument1Ptr, out T1 arg1);
-            UnsafeUtility.CopyPtrToStructure(Argument2Ptr, out T2 arg2);
-
-            result = func.Execute(arg1, arg2);
+            UnsafeUtility.CopyPtrToStructure(FunctionPtr, out TFunc func);//要看外部ref进来的是托管堆还是栈
+            UnsafeUtility.CopyPtrToStructure(Argument1Ptr, out T1 arg1);//这里应该从托管堆（堆上的arg1是一个UnsafeList，是托管的，但是里面的数据是非托管，只是这个壳要gc）上，拷贝到托管栈上
+            UnsafeUtility.CopyPtrToStructure(Argument2Ptr, out T2 arg2);//这个是out T2 arg2 把外面传进来的地址内存，拷贝new一份到arg2
+            result = func.Execute(ref arg1, ref arg2);//关键要ref，2022之后被修改为默认值传递，要引用传递进去被使用和修改，同时避免内存多分拷贝
+            UnsafeUtility.CopyStructureToPtr(ref arg2, Argument2Ptr);//out T2 arg2  : copy的内存是new，要把值拷贝回去
             UnsafeUtility.CopyStructureToPtr(ref result, ResultPtr);
         }
 
-        public static unsafe TResult Run(TFunc func, T1 arg1, T2 arg2)
+        public static unsafe TResult Run(ref TFunc func, ref T1 arg1, ref T2 arg2)//这里都ref，避免内存多分拷贝
         {
             TResult result = default;
             new BurstFunction<TFunc, T1, T2, TResult>

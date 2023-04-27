@@ -1,21 +1,26 @@
 {
     "name": "Vella.NativeHull.Tests",
+    "rootNamespace": "",
     "references": [
         "GUID:d8b63aba1907145bea998dd612889d6b",
         "GUID:56d587dec131a3d49b5ef08d8a57d219",
-        "GUID:b46976b8a773ae341bbd9ca990e20dfb"
-    ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
+        "GUID:b46976b8a773ae341bbd9ca990e20dfb",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
     ],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": []
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

@@ -2,6 +2,9 @@
 using Unity.Collections;
 using Unity.Burst;
 using Vella.Common;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine;
+using Unity.Jobs;
 
 namespace Vella.UnityNativeHull
 {
@@ -91,9 +94,89 @@ namespace Vella.UnityNativeHull
         }
 
         [BurstCompile]
-        public struct CollisionBatch : IBurstFunction<NativeArray<BatchCollisionInput>, NativeList<BatchCollisionResult>, bool>
+        public struct TestBatch :IJob
         {
-            public bool Execute(NativeArray<BatchCollisionInput> hulls, NativeList<BatchCollisionResult> results)
+            [ReadOnly]
+            public UnsafeList<BatchCollisionInput> hulls;//job在被new的时候，这些就是引用传递，不是值拷贝，内存共享
+            public UnsafeList<BatchCollisionResult>.ParallelWriter results;//NativeArray封装了默认可以写， UnsafeList默认不可以写入，要用ParallelWriter
+            public NativeReference<bool> result;
+
+            public unsafe void Execute()
+            {
+                //fixed (UnsafeList<BatchCollisionInput>* t1 = &hulls)//成员变量必须用fixed来固定地址访问
+                //{
+                //    fixed (UnsafeList<BatchCollisionResult>.ParallelWriter* t2 = &results)
+                //    {
+                //        Ex2(t1, t2);
+                //    }
+                //}
+
+                result.Value = Execute2(ref hulls, ref results);
+                //Debug.Log(results.ListData->Length + "?????????/.///");
+
+            }
+
+            unsafe bool Execute2(ref UnsafeList<BatchCollisionInput> hulls, ref UnsafeList<BatchCollisionResult>.ParallelWriter results)
+            {
+                //unsafe
+                //{
+                //    var aa = new TestBatch();
+                //    var bb = &aa;
+                //    var cc = &bb->arg1;
+                //}
+                var isCollision = false;
+                for (int i = 0; i < hulls.Length; ++i)
+                {
+                    for (int j = i + 1; j < hulls.Length; j++)
+                    {
+                        var a = hulls[i];
+                        var b = hulls[j];
+
+                        if (HullCollision.IsColliding(a.Transform, a.Hull, b.Transform, b.Hull))
+                        {
+                            isCollision = true;
+                            results.ListData->AddNoResize(new BatchCollisionResult
+                            {
+                                A = a,
+                                B = b,
+                            });
+                        }
+                    }
+                }
+                return isCollision;
+            }
+
+            //函数传递时候，arg1就是值拷贝，需要加ref 才可以引用传递，或者用指针地址传递
+            unsafe void Ex2(UnsafeList<BatchCollisionInput>* hulls, UnsafeList<BatchCollisionResult>.ParallelWriter* results)
+            {
+                //var a = arg11->Ptr[0];
+                var isCollision = false;
+                for (int i = 0; i < hulls->Length; ++i)
+                {
+                    for (int j = i + 1; j < hulls->Length; j++)
+                    {
+                        var a = hulls->Ptr[i];
+                        var b = hulls->Ptr[j];
+
+                        if (HullCollision.IsColliding(a.Transform, a.Hull, b.Transform, b.Hull))
+                        {
+                            isCollision = true;
+                            results->ListData->AddNoResize(new BatchCollisionResult
+                            {
+                                A = a,
+                                B = b,
+                            });
+                        }
+                    }
+                }
+                result.Value = isCollision;
+            }
+        }
+
+        [BurstCompile]
+        public struct CollisionBatch : IBurstFunction<UnsafeList<BatchCollisionInput>, UnsafeList<BatchCollisionResult>, bool>
+        {
+            public bool Execute(ref UnsafeList<BatchCollisionInput> hulls, ref UnsafeList<BatchCollisionResult> results)
             {
                 var isCollision = false;
                 for (int i = 0; i < hulls.Length; ++i)
@@ -117,12 +200,32 @@ namespace Vella.UnityNativeHull
                 return isCollision;
             }
 
-            public static bool Invoke(NativeArray<BatchCollisionInput> hulls, NativeList<BatchCollisionResult> results)
+            //这里必须用ref，才能引用传递
+            public static bool Invoke(ref UnsafeList<BatchCollisionInput> hulls, ref UnsafeList<BatchCollisionResult> results)
             {
-                return BurstFunction<CollisionBatch, NativeArray<BatchCollisionInput>, NativeList<BatchCollisionResult>, bool>.Run(Instance, hulls, results);
+                //这里的方式有内存拷贝，虽然能为了抽象BurstFunction，但是带来的多余的拷贝
+                return BurstFunction<CollisionBatch, UnsafeList<BatchCollisionInput>, UnsafeList<BatchCollisionResult>, bool>.Run(ref _instance, ref hulls, ref results);
+                //var r = new NativeReference<bool>(Allocator.TempJob);//NativeReference默认可写
+                //var job = new TestBatch() {
+                //    hulls = hulls,
+                //    results = results.AsParallelWriter(),//转成可写才可以
+                //    result = r,//也要用共享可以读写的内存
+                //};
+                ////var handle = job.Schedule();
+                ////handle.Complete();//阻塞主线程等待调用
+                //job.Run();//立即在同一线程上执行作业的Execute方法
+                //unsafe
+                //{
+                //    Debug.Log(job.results.ListData->m_length + "_____" + job.result.Value);
+                //}
+                //var rr = job.result.Value;
+                //Debug.Log(results.Length + "++++++" + rr);
+                //r.Dispose();
+                //return rr;
             }
 
-            public static CollisionBatch Instance { get; } = new CollisionBatch();
+            static CollisionBatch _instance = new CollisionBatch();
+            public static CollisionBatch Instance { get => _instance; }
         }
 
     }

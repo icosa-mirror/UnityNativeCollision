@@ -14,7 +14,16 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Internal;
 
-
+namespace Unity.Mathematics
+{
+    public class math_2
+    {
+        public static int log2_floor(int value)
+        {
+            return 31 - math.lzcnt(value);
+        }
+    }
+}
 namespace Vella.Common
 {
     /// <summary>
@@ -749,12 +758,12 @@ namespace Vella.Common
 
         public unsafe ref T AsRef<T>(int index) where T : struct
         {     
-            return ref UnsafeUtilityEx.AsRef<T>((void*)((IntPtr)m_Buffer + (UnsafeUtility.SizeOf<T>() * index)));
+            return ref UnsafeUtility.AsRef<T>((void*)((IntPtr)m_Buffer + (UnsafeUtility.SizeOf<T>() * index)));
         }
 
         public unsafe ref T AsRef<T>(int index, int offset) where T : struct
         {
-            return ref UnsafeUtilityEx.AsRef<T>((void*)((IntPtr)m_Buffer + (UnsafeUtility.SizeOf<T>() * index) + offset));
+            return ref UnsafeUtility.AsRef<T>((void*)((IntPtr)m_Buffer + (UnsafeUtility.SizeOf<T>() * index) + offset));
         }
 
         public unsafe T* AsPtr<T>(int index) where T : unmanaged

@@ -10,12 +10,12 @@ public struct TestShape : IBoundingHierarchyNode, IEquatable<TestShape>, ICompar
     public int Id;
 
     public RigidTransform Transform;
-    public NativeHull Hull;
+    public NativeHull Hull;//最关键是这个，这个图形的顶点数据，面法线，有效边数据
 
     public BoundingBox BoundingBox;
     public BoundingSphere BoundingSphere;
 
-    public bool HasChanged => true;
+    public bool HasChanged => true;//估计是临时的，应该是有发生坐标变更时候返回true
 
     public float3 Position => Transform.pos;
 
@@ -31,7 +31,7 @@ public struct TestShape : IBoundingHierarchyNode, IEquatable<TestShape>, ICompar
         return obj is TestShape shape && shape.Equals(this);
     }
 
-    public int CompareTo(TestShape other)
+    public int CompareTo(TestShape other)//比较大小，用id来确定哪个大？？ 估计是为了实现IComparable占位的，用来排序时候比较
     {
         return Id.CompareTo(other.Id);
     }

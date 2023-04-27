@@ -12,6 +12,7 @@ using Debug = UnityEngine.Debug;
 using UnityEditor;
 #endif
 
+
 [ExecuteInEditMode]
 public class BvhTester : MonoBehaviour
 {
@@ -19,9 +20,11 @@ public class BvhTester : MonoBehaviour
 
     private Dictionary<int, (TestShape Shape, GameObject Go)> _currentShapes;
 
-    private NativeBoundingHierarchy<TestShape> _bvh;
+    public NativeBoundingHierarchy<TestShape> _bvh;
 
     public bool ShouldRemoveClones { get; set; } = false;
+
+    public Bounds DetectBounds;
 
     void Update()
     {
@@ -171,6 +174,12 @@ public class BvhTester : MonoBehaviour
                 break;
         }
     }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(DetectBounds.center, DetectBounds.size);
+    }
 #endif
 
     void OnDestroy() => EnsureDestroyed();
@@ -189,6 +198,7 @@ public class BvhTester : MonoBehaviour
         {
             var go = Instantiate(first.gameObject);
             go.transform.position = UnityEngine.Random.insideUnitSphere * 10f;
+            if (go.GetComponent<InstanceId>() == null) go.AddComponent<InstanceId>();
             Transforms.Add(go.transform);
             var id = go.transform.GetInstanceID();
             var shape = CreateShape(go.transform);
@@ -250,6 +260,26 @@ public class BvhTesterEditor : Editor
             else if (GUILayout.Button("Remove Clones"))
             {
                 targ.RemoveClones();
+            }
+            else if(GUILayout.Button("Test Traverse"))
+            {
+                var bounds = new BoundingBox(targ.DetectBounds.min,targ.DetectBounds.max);
+                var list = targ._bvh.Traverse(bounds);
+                Debug.Log(list.Count);
+                foreach(var n in list)
+                {
+                    if (n.BucketIndex == -1) continue;
+                    var shape = targ._bvh.GetBucket(n.BucketIndex);
+                    //if (shape.Length <= 0) continue;
+                    var arrs = shape.ToArray();
+                    foreach (var a in arrs)
+                        Debug.Log(a.Id);
+                }
+            }
+            else if(GUILayout.Button("Test BVH not native"))
+            {
+                DataStructures.Tests.BVHTests test = new DataStructures.Tests.BVHTests();
+                targ.StartCoroutine( test.Test1CreateThroughConstruct());
             }
             SceneView.RepaintAll();
         }        
