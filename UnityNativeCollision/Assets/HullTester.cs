@@ -240,7 +240,7 @@ public class HullTester : MonoBehaviour
     private void HandleTransformChanged()
     {
         var transforms = Transforms.ToList().Distinct().Where(t => t.gameObject.activeSelf).ToList();
-        //var newTransformFound = false;
+        var newTransformFound = false;
         var transformCount = 0;
 
         if (Hulls != null)
@@ -254,22 +254,29 @@ public class HullTester : MonoBehaviour
                 transformCount++;
 
                 var foundNewHull = !Hulls.ContainsKey(t.GetInstanceID());
-                if (foundNewHull)
+                if (foundNewHull)//新增
                 {
-                    //newTransformFound = true;
+                    newTransformFound = true;
+                    break;
+                }
+                var prevPos = Hulls[t.GetInstanceID()].Position;
+                var curPosF3 = (float3)t.position;
+                if (!curPosF3.Equals(prevPos))//坐标变
+                {
+                    newTransformFound = true;
                     break;
                 }
             }
 
-            //if (!newTransformFound && transformCount == Hulls.Count)//没有多新增的测试多边形物体也要更新，因为会拖来拖去变更坐标
-            //    return;
+            if (!newTransformFound && transformCount == Hulls.Count)
+                return;
         }
 
         Debug.Log("Rebuilding Objects");
 
         EnsureDestroyed();
 
-        Hulls = transforms.Where(t => t != null).ToDictionary(k => k.GetInstanceID(), CreateShape);
+        Hulls = transforms.Where(t => t != null).ToDictionary(k => k.GetInstanceID(), CreateShape);//重新new
         GameObjects = transforms.Where(t => t != null).ToDictionary(k => k.GetInstanceID(), t => t.gameObject);
 
         SceneView.RepaintAll();
@@ -283,7 +290,7 @@ public class HullTester : MonoBehaviour
         for (int i = 0; i < hull.VertexCount; i++)
         {
             var v = hull.GetVertex(i);
-            bounds.Encapsulate(v);
+            bounds.Encapsulate(v);//封装到包围盒计算范围
         }
 
         var sphere = BoundingSphere.FromAABB(bounds);
@@ -314,6 +321,13 @@ public class HullTester : MonoBehaviour
         {
             return HullFactory.CreateFromMesh(mf.sharedMesh);
         }
+        //自己的json
+        var temp_fag = v.GetComponent<InstanceId>();
+        if (temp_fag != null)
+        {
+            return PJNoize.NoizeHullFactory.CreateFromJsonConfig(temp_fag.ColliderFileName);
+        }
+
         throw new InvalidOperationException($"Unable to create a hull from the GameObject '{v?.name}'");
     }
 

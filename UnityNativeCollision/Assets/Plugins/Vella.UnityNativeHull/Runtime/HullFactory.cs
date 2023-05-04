@@ -22,7 +22,7 @@ namespace Vella.UnityNativeHull
         {
             public int VertexCount;
             public int* Vertices;
-            public int HighestIndex;
+            public int HighestIndex;//这个面用到的顶点列表的下标序号，最大的序号值，用来排除独立顶点时候用来判定
         };
 
         public unsafe struct NativeHullDef
@@ -90,12 +90,12 @@ namespace Vella.UnityNativeHull
 
         public static unsafe NativeHull CreateFromMesh(Mesh mesh)
         {
-            var faces = new List<DetailedFaceDef>();
-            var verts = mesh.vertices.Select(RoundVertex).ToArray();
-            var uniqueVerts = verts.Distinct().ToList();
+            var faces = new List<DetailedFaceDef>();//未去重的三角面
+            var verts = mesh.vertices.Select(RoundVertex).ToArray();//所有顶点，没有处理顶点
+            var uniqueVerts = verts.Distinct().ToList();//去掉重叠的顶点(没考虑是否有效点，是否对称顶点) 有多余的点存在，计算量多了(例如圆锥体底面的中心点是没有用的)
             var indices = mesh.triangles;
 
-            // Create faces from Triangles and collapse multiple vertices with same position into shared vertices.
+            // Create faces from Triangles and collapse multiple vertices with same position into shared vertices.从三角形创建面，并将具有相同位置的多个顶点塌陷为共享顶点。
             for (int i = 0; i < mesh.triangles.Length; i = i + 3)
             {
                 var idx1 = i;
@@ -109,14 +109,14 @@ namespace Vella.UnityNativeHull
                 var normal = math.normalize(math.cross(p3 - p2, p1 - p2));
 
                 // Round normal so that faces with only slight variances can be grouped properly together.
-                var roundedNormal = RoundVertex(normal);
+                var roundedNormal = RoundVertex(normal);//面法线，保留3位小数，避免稍微偏差角度的平行面被多余分组出来，减少运算量
 
                 faces.Add(new DetailedFaceDef
                 {
                     Center = ((p1 + p2 + p3) / 3),
                     Normal = roundedNormal,
                     Verts = new List<float3> { p1, p2, p3 },
-                    Indices = new List<int>
+                    Indices = new List<int>//对应顶点列表的下标序号
                     {
                         uniqueVerts.IndexOf(p1),
                         uniqueVerts.IndexOf(p2),
@@ -125,26 +125,36 @@ namespace Vella.UnityNativeHull
                 });
             }
 
-            var faceDefs = new List<NativeFaceDef>();
+            var faceDefs = new List<NativeFaceDef>();//用共法线和被有效顶点连成的面，不一定是一个三角面的，可能是n个三角面  native 数据
             var orphanIndices = new HashSet<int>();
 
             // Merge all faces with the same normal and shared vertex         
-            var mergedFaces = GroupBySharedVertex(GroupByNormal(faces));
+            var mergedFaces = GroupBySharedVertex(GroupByNormal(faces));//以相同，平行的面法线，得到每一组共顶点的三角面
 
-            foreach (var faceGroup in mergedFaces)
+            foreach (var faceGroup in mergedFaces)//遍历共顶点的面
             {
-                var indicesFromMergedFaces = faceGroup.SelectMany(face => face.Indices).ToArray();
+                var indicesFromMergedFaces = faceGroup.SelectMany(face => face.Indices).ToArray();//每一个面的3个顶点序号全部抽到一个列表中
 
                 // Collapse points inside the new combined face by using only the border vertices.
-                var border = PolygonPerimeter.CalculatePerimeter(indicesFromMergedFaces, ref uniqueVerts);
-                var borderIndices = border.Select(b => b.EndIndex).ToArray();
+                var border = PolygonPerimeter.CalculatePerimeter(indicesFromMergedFaces, ref uniqueVerts);//这组共顶点的所有面，计算出所有 有效边
+                var borderIndices = border.Select(b => b.EndIndex).ToArray();//外部顶点序号，即不共面的点，也就是有效顶点，围成的是有顶点连接的n个三角面的
 
                 foreach(var idx in indicesFromMergedFaces.Except(borderIndices))
                 {
-                    orphanIndices.Add(idx);
+                    orphanIndices.Add(idx);//独立顶点，用来还原法线???
                 }
-  
-                var v = stackalloc int[borderIndices.Length];
+
+                /*
+                 * stack  栈
+                 * heap   堆
+                 * A stackalloc expression allocates a block of memory on the stack.
+                 表达式stackalloc在托管栈上分配一块内存。
+                在方法执行期间创建的托管栈分配内存块在该方法返回时会自动丢弃。
+                您不能显式释放分配的内存stackalloc。这个托管栈分配的内存块不受垃圾收集的影响，也不必用fixed语句固定。
+
+                 stackalloc 把这些内存传给NativeArray 它会拷贝到非托管堆上，在函数结束，这些内存会被回收，不会gc
+                 */
+                var v = stackalloc int[borderIndices.Length];//所有有效顶点长度，按int 4个字节，一次过分配要的内存
                 int max = 0;     
                 for (int i = 0; i < borderIndices.Length; i++)
                 {
@@ -156,18 +166,19 @@ namespace Vella.UnityNativeHull
 
                 faceDefs.Add(new NativeFaceDef
                 {
-                    HighestIndex = max,
-                    VertexCount = borderIndices.Length,
-                    Vertices = v,
+                    HighestIndex = max,//这个面用到的顶点列表的下标序号，最大的序号值
+                    VertexCount = borderIndices.Length,//顶点总数
+                    Vertices = v,//顶点列表首地址指针，每次指针偏移+1，就是一个顶点序号
                 });
             }
 
             // Remove vertices with no edges connected to them and fix all impacted face vertex references.
+            //删除没有连接边的顶点，并修复所有受影响的面顶点引用。
             foreach (var orphanIdx in orphanIndices.OrderByDescending(i => i))
             {
                 uniqueVerts.RemoveAt(orphanIdx);
 
-                foreach(var face in faceDefs.Where(f => f.HighestIndex >= orphanIdx))
+                foreach(var face in faceDefs.Where(f => f.HighestIndex >= orphanIdx))//把独立顶点从faceDefs的顶点数组中去掉  f.HighestIndex >= orphanIdx 只要最大的顶点序号比独立的大，就是有包含这个？
                 {
                     for (int i = 0; i < face.VertexCount; i++)
                     {
@@ -179,6 +190,8 @@ namespace Vella.UnityNativeHull
                     }
                 }
             }
+
+            //将uniqueVerts，faceDefs序列号到json
 
             var result = new NativeHull();
 
@@ -385,6 +398,7 @@ namespace Vella.UnityNativeHull
             }
         }
 
+        //未去重的三角面按法线分组
         public static Dictionary<float3, List<DetailedFaceDef>> GroupByNormal(IList<DetailedFaceDef> data)
         {
             var map = new Dictionary<float3, List<DetailedFaceDef>>();
@@ -406,13 +420,13 @@ namespace Vella.UnityNativeHull
             var result = new List<List<DetailedFaceDef>>();
             foreach (var facesSharingNormal in groupedFaces)
             {
-                var map = new List<(HashSet<int> Key, List<DetailedFaceDef> Value)>();
+                var map = new List<(HashSet<int> Key, List<DetailedFaceDef> Value)>();//看看共法线的面，按共顶点来分组
                 foreach (var face in facesSharingNormal.Value)
                 {
-                    var group = map.FirstOrDefault(pair => face.Indices.Any(pair.Key.Contains));
+                    var group = map.FirstOrDefault(pair => face.Indices.Any(pair.Key.Contains));//每一个三角面的任意一个顶点序号，在共顶点组中
                     if (group.Key != null)
                     {
-                        foreach (var idx in face.Indices)
+                        foreach (var idx in face.Indices)//这里把除找到的共顶点序号外，这个面的其他顶点序号都加到这个组中
                         {
                             group.Key.Add(idx);
                         }
@@ -423,11 +437,13 @@ namespace Vella.UnityNativeHull
                         map.Add((new HashSet<int>(face.Indices), new List<DetailedFaceDef> { face }));
                     }
                 }
-                result.AddRange(map.Select(group => group.Value));
+                //有顶点连接的三角面，同一个法线的，都被规到一组，就是这里的list<list<>> 里的一个元素，一堆三角面 
+                result.AddRange(map.Select(group => group.Value));//注意同法线的三角面，但不是共面的，没有链接顶点的，就是两组三角面
             }
             return result;
         }
 
+        //从一个Vertex得到一个float3
         public static float3 RoundVertex(Vector3 v)
         {
             return new float3(
