@@ -16,21 +16,34 @@ namespace PJNoize
             var configAsset = Resources.Load<TextAsset>(colliderFileName);
             string strs = configAsset.text;
             SJsonStruct data = (SJsonStruct)Newtonsoft.Json.JsonConvert.DeserializeObject(strs, typeof(SJsonStruct));
-            var uniqueVerts = data.uniqueVerts;
-            var faceDefs = new List<HullFactory.NativeFaceDef>();
 
-            foreach(var fase in data.faceDefs)
+            int i, j;
+            var uniqueVerts = new List<float3>();
+            for(i = 0; i < data.a.Count; i ++)
             {
-                var v = stackalloc int[fase.VertexCount];
-                for (int i = 0; i < fase.VertexCount; i++)
+                var vs = data.a[i];
+                uniqueVerts.Add(new float3 {
+                    x = vs[0],
+                    y = vs[1],
+                    z = vs[2]
+                });
+            }
+
+
+            var faceDefs = new List<HullFactory.NativeFaceDef>();
+            for(i = 0; i < data.b.Count; i++)
+            {
+                var fase = data.b[i];
+                var v = stackalloc int[fase.Count];
+                for (j = 0; j < fase.Count; j++)
                 {
-                    var idx = fase.Vertices[i];
-                    v[i] = idx;
+                    var idx = fase[j];
+                    v[j] = idx;
                 }
                 faceDefs.Add(new HullFactory.NativeFaceDef
                 {
                     HighestIndex = 0,//运行时没用的
-                    VertexCount = fase.VertexCount,
+                    VertexCount = fase.Count,
                     Vertices = v,
                 });
             }
@@ -162,24 +175,18 @@ namespace PJNoize
             }
 
             //将uniqueVerts，faceDefs序列号到json
-            var all_uniqueVerts = listVector3("uniqueVerts", uniqueVerts);
-            var all_faceDefs = listFace("faceDefs", faceDefs);
+            var all_uniqueVerts = listVector3("a", uniqueVerts);
+            var all_faceDefs = listFace("b", faceDefs);
             string allDataStr = string.Format("{{{0}, {1}}}", all_uniqueVerts, all_faceDefs);
 
             Debug.Log(allDataStr);
             return allDataStr;
         }
 
-        public class JsonFaceDef
-        {
-            public int VertexCount;
-            public List<int> Vertices;
-        }
-
         public class SJsonStruct
         {
-            public List<float3> uniqueVerts;
-            public List<JsonFaceDef> faceDefs;
+            public List<List<float>> a;//uniqueVerts
+            public List<List<int>> b;//faceDefs
         }
 
         static string listVector3(string key, List<float3> list)
@@ -187,15 +194,15 @@ namespace PJNoize
             string allListStr = string.Format("\"{0}\":[", key);
             for (int i = 0; i < list.Count; i++)
             {
-                string vertStr = "{";
+                string vertStr = "[";
                 var vert = list[i];
 
                 //保留3位小数的字符串
-                vertStr += "\"x\":" + vert.x.ToString("f3") + ",";
-                vertStr += "\"y\":" + vert.y.ToString("f3") + ",";
-                vertStr += "\"z\":" + vert.z.ToString("f3");
+                vertStr += vert.x.ToString("f3") + ",";
+                vertStr += vert.y.ToString("f3") + ",";
+                vertStr += vert.z.ToString("f3");
 
-                vertStr += "}";
+                vertStr += "]";
                 allListStr += vertStr;
                 if (i != list.Count - 1)
                 {
@@ -210,16 +217,13 @@ namespace PJNoize
         static unsafe string listFace(string key, List<HullFactory.NativeFaceDef> list)
         {
             string allListStr = string.Format("\"{0}\":[", key);
+
             for (int i = 0; i < list.Count; i++)
             {
-                allListStr += "{";//一个开始
+                //allListStr += "{";//一个开始
                 var face = list[i];
 
-
-                string vertexCount = string.Format("\"VertexCount\": {0},", face.VertexCount);
-                allListStr += vertexCount;
-
-                string vertsStr = "\"Vertices\":[";
+                string vertsStr = "[";
                 for (int j = 0; j < face.VertexCount; j++)
                 {
                     var faceVertIdx = face.Vertices[j];
@@ -234,13 +238,14 @@ namespace PJNoize
                 allListStr += vertsStr;
 
 
-                allListStr += "}";//搞定一个
+                //allListStr += "}";//搞定一个
                 if (i != list.Count - 1)
                 {
                     //not end
                     allListStr += ",";
                 }
             }
+
             allListStr += "]";
             return allListStr;
         }

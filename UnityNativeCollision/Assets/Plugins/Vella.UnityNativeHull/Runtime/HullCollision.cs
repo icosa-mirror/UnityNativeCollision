@@ -259,7 +259,7 @@ namespace Vella.UnityNativeHull
                     var signedDistance = math.dot(math.cross(v2, v1), closestPlanePoint);
                     if (signedDistance < 0)
                     {
-                        return MathUtility.ProjectPointOnLineSegment(v1, v2, point);
+                        return MathUtility.ProjectPointOnLineSegment(v1, v2, point);//找point在v1 - v2 线段上的投影
                     }
                     current = ref hull.GetEdgeRef(current.Next);
                 }
