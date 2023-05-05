@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
@@ -17,10 +18,10 @@ namespace Vella.UnityNativeHull
         // Native array is currently not Blittable because of DisposeSentinel being a class.
         // Which means you cannot place inside a NativeArray<T>, which batch operations require.
 
-        public NativeArrayNoLeakDetection<float3> VerticesNative;
-        public NativeArrayNoLeakDetection<NativeFace> FacesNative;
-        public NativeArrayNoLeakDetection<NativePlane> PlanesNative;
-        public NativeArrayNoLeakDetection<NativeHalfEdge> EdgesNative;
+        public UnsafeList<float3> VerticesNative;
+        public UnsafeList<NativeFace> FacesNative;
+        public UnsafeList<NativePlane> PlanesNative;
+        public UnsafeList<NativeHalfEdge> EdgesNative;
 
         //public NativeArray<float3> verticesNative;
         //public NativeArray<NativeFace> facesNative;

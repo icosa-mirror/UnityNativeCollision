@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using UnityEngine;
 using Vella.Common;
@@ -25,7 +26,7 @@ namespace Vella.UnityNativeHull
             public int HighestIndex;//这个面用到的顶点列表的下标序号，最大的序号值，用来排除独立顶点时候用来判定
         };
 
-        public unsafe struct NativeHullDef
+        public unsafe struct NativeHullDef//用来中转顶点和面数据，用来初始化NativeHull
         {
             public int FaceCount;
             public int VertexCount;
@@ -135,13 +136,15 @@ namespace Vella.UnityNativeHull
             {
                 var indicesFromMergedFaces = faceGroup.SelectMany(face => face.Indices).ToArray();//每一个面的3个顶点序号全部抽到一个列表中
 
-                // Collapse points inside the new combined face by using only the border vertices.
+                // Collapse points inside the new combined face by using only the border vertices.通过仅使用边界顶点来折叠新组合面内的点。
                 var border = PolygonPerimeter.CalculatePerimeter(indicesFromMergedFaces, ref uniqueVerts);//这组共顶点的所有面，计算出所有 有效边
-                var borderIndices = border.Select(b => b.EndIndex).ToArray();//外部顶点序号，即不共面的点，也就是有效顶点，围成的是有顶点连接的n个三角面的
+                var borderIndices = border.Select(b => b.EndIndex).ToArray();//外边界顶点序号，也就是有效顶点围成的是有顶点连接的n个三角面的
+                //因为上面函数已经保证有效边首尾相连，所以只保留EndIndex，有结尾序号两两连接就是一条边，
+                   //这里的外边界有效边，没有考虑平行边可以去掉，所以会有冗余边数据，但是能还原出图形，运算量会多一些
 
                 foreach(var idx in indicesFromMergedFaces.Except(borderIndices))
                 {
-                    orphanIndices.Add(idx);//独立顶点，用来还原法线???
+                    orphanIndices.Add(idx);//独立顶点，用来把它们从有效顶点列表中排除掉，面法线不需要像我之前设置那样用独立顶点求，只要有一个面的n个顶点，随意两条边都能求面法线
                 }
 
                 /*
@@ -204,7 +207,7 @@ namespace Vella.UnityNativeHull
                 hullDef.VerticesNative = vertsNative;
                 hullDef.FaceCount = faceNative.Length;
                 hullDef.FacesNative = faceNative;
-                SetFromFaces(ref result, hullDef);
+                SetFromFaces(ref result, hullDef);//ref传引用函数内部修改，用外面的hullDef托管栈上临时数据，Allocator.Temp这些临时内存，初始化result
             }
 
             result.IsCreated = true;
@@ -221,13 +224,20 @@ namespace Vella.UnityNativeHull
             Debug.Assert(def.VertexCount > 0);
 
             hull.VertexCount = def.VertexCount;
-            var arr = def.VerticesNative.ToArray();
+            hull.VerticesNative = new UnsafeList<float3>(hull.VertexCount, Allocator.Persistent);
+            for(int i = 0; i < def.VerticesNative.Length; i++)
+            {
+                hull.VerticesNative.Add(def.VerticesNative[i]);
+            }
+            hull.Vertices = hull.VerticesNative.Ptr;
 
-            hull.VerticesNative = new NativeArrayNoLeakDetection<float3>(arr, Allocator.Persistent);
-            hull.Vertices = (float3*)hull.VerticesNative.GetUnsafePtr();
             hull.FaceCount = def.FaceCount;
-            hull.FacesNative = new NativeArrayNoLeakDetection<NativeFace>(hull.FaceCount, Allocator.Persistent);
-            hull.Faces = (NativeFace*)hull.FacesNative.GetUnsafePtr();
+            hull.FacesNative = new UnsafeList<NativeFace>(hull.FaceCount, Allocator.Persistent);
+            for (int i = 0; i < def.FaceCount; i++)
+            {
+                hull.FacesNative.Add(new NativeFace());
+            }
+            hull.Faces = hull.FacesNative.Ptr;
 
             // Initialize all faces by assigning -1 to each edge reference.
             for (int k = 0; k < def.FaceCount; ++k)
@@ -330,13 +340,13 @@ namespace Vella.UnityNativeHull
 
             }
 
-            hull.EdgesNative = new NativeArrayNoLeakDetection<NativeHalfEdge>(hull.EdgeCount, Allocator.Persistent);
+            hull.EdgesNative = new UnsafeList<NativeHalfEdge>(hull.EdgeCount, Allocator.Persistent);
             for (int j = 0; j < hull.EdgeCount; j++)
             {
-                hull.EdgesNative[j] = edgesList[j];                
+                hull.EdgesNative.Add(edgesList[j]);                
             }
 
-            hull.Edges = (NativeHalfEdge*)hull.EdgesNative.GetUnsafePtr();
+            hull.Edges = hull.EdgesNative.Ptr;
         }
 
         public unsafe static void CreateFacesPlanes(ref NativeHull hull, ref NativeHullDef def)
@@ -344,8 +354,12 @@ namespace Vella.UnityNativeHull
             //Debug.Assert((IntPtr)hull.facesPlanes != IntPtr.Zero);
             //Debug.Assert(hull.faceCount > 0);
 
-            hull.PlanesNative = new NativeArrayNoLeakDetection<NativePlane>(def.FaceCount, Allocator.Persistent);
-            hull.Planes = (NativePlane*)hull.PlanesNative.GetUnsafePtr();
+            hull.PlanesNative = new UnsafeList<NativePlane>(def.FaceCount, Allocator.Persistent);
+            for (int i = 0; i < def.FaceCount; i++)
+            {
+                hull.PlanesNative.Add(new NativePlane());
+            }
+            hull.Planes = hull.PlanesNative.Ptr;
 
             for (int i = 0; i < def.FaceCount; ++i)
             {
@@ -462,11 +476,12 @@ namespace Vella.UnityNativeHull
 
             private static readonly List<Edge> OutsideEdges = new List<Edge>();
 
+            //通过所有共面的顶点，求出所有外面的边，与其他面连接的外围边，即没有连接独立顶点的边
             public static List<Edge> CalculatePerimeter(int[] indices, ref List<float3> verts)
             {
                 OutsideEdges.Clear();
 
-                for (int i = 0; i < indices.Length - 1; i += 3)
+                for (int i = 0; i < indices.Length - 1; i += 3)//这里进来的所有顶点序号，每三个是属于一个三角面的顶点，两两连就是一条边，三条边都检查
                 {
                     int v3;
                     int v2;
@@ -487,7 +502,7 @@ namespace Vella.UnityNativeHull
                     var edge = OutsideEdges[i];
                     var nextIdx = i + 1 > OutsideEdges.Count - 1 ? 0 : i + 1;
                     var next = OutsideEdges[nextIdx];
-                    if (edge.EndIndex != next.StartIndex)
+                    if (edge.EndIndex != next.StartIndex)//所有剩余的有效边，看看是不是首尾相连
                     {
                         return Rebuild();
                     }
@@ -496,6 +511,7 @@ namespace Vella.UnityNativeHull
                 return OutsideEdges;
             }
 
+            //判断两两三角面连接的边，把它排除掉，不是有效边
             private static void AddOutsideEdge(int i1, int i2)
             {
                 foreach (var edge in OutsideEdges)
@@ -511,6 +527,7 @@ namespace Vella.UnityNativeHull
                 OutsideEdges.Add(new Edge { StartIndex = i1, EndIndex = i2 });
             }
 
+            //重新把有效边调整为首尾相连
             private static List<Edge> Rebuild()
             {
                 var result = new List<Edge>();

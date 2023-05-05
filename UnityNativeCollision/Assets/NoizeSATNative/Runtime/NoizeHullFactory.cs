@@ -121,10 +121,11 @@ namespace PJNoize
                 // Collapse points inside the new combined face by using only the border vertices.
                 var border = HullFactory.PolygonPerimeter.CalculatePerimeter(indicesFromMergedFaces, ref uniqueVerts);//这组共顶点的所有面，计算出所有 有效边
                 var borderIndices = border.Select(b => b.EndIndex).ToArray();//外部顶点序号，即不共面的点，也就是有效顶点，围成的是有顶点连接的n个三角面的
+                //因为上面函数已经保证有效边首尾相连，所以只保留EndIndex，有结尾序号两两连接就是一条边，
 
                 foreach (var idx in indicesFromMergedFaces.Except(borderIndices))
                 {
-                    orphanIndices.Add(idx);//独立顶点，用来还原法线???
+                    orphanIndices.Add(idx);//独立顶点，用来把它们从有效顶点列表中排除掉
                 }
 
                 /*
@@ -179,7 +180,7 @@ namespace PJNoize
             var all_faceDefs = listFace("b", faceDefs);
             string allDataStr = string.Format("{{{0}, {1}}}", all_uniqueVerts, all_faceDefs);
 
-            Debug.Log(allDataStr);
+            //Debug.Log(allDataStr);
             return allDataStr;
         }
 
