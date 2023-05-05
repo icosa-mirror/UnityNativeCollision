@@ -207,7 +207,8 @@ namespace Vella.UnityNativeHull
                 hullDef.VerticesNative = vertsNative;
                 hullDef.FaceCount = faceNative.Length;
                 hullDef.FacesNative = faceNative;
-                SetFromFaces(ref result, hullDef);//ref传引用函数内部修改，用外面的hullDef托管栈上临时数据，Allocator.Temp这些临时内存，初始化result
+                //两个都ref 避免值拷贝，都引用
+                SetFromFaces(ref result, ref hullDef);//ref传引用函数内部修改，用外面的hullDef托管栈上临时数据，Allocator.Temp这些临时内存，初始化result
             }
 
             result.IsCreated = true;
@@ -218,7 +219,7 @@ namespace Vella.UnityNativeHull
         }
 
 
-        public unsafe static void SetFromFaces(ref NativeHull hull, NativeHullDef def)
+        public unsafe static void SetFromFaces(ref NativeHull hull, ref NativeHullDef def)
         {
             Debug.Assert(def.FaceCount > 0);
             Debug.Assert(def.VertexCount > 0);
