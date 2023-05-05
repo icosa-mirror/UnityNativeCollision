@@ -54,7 +54,7 @@ public class HullTester : MonoBehaviour
                 continue;
 
             var hullA = Hulls[tA.GetInstanceID()].Hull;
-            var transformA = new RigidTransform(tA.rotation, tA.position);
+            var transformA = Hulls[tA.GetInstanceID()].Transform;// new RigidTransform(tA.rotation, tA.position);
 
             HullDrawingUtility.DrawDebugHull(hullA, transformA, HullDrawingOptions);
 
@@ -87,7 +87,7 @@ public class HullTester : MonoBehaviour
                     continue;
                 
                 var hullB = Hulls[tB.GetInstanceID()].Hull;
-                var transformB = new RigidTransform(tB.rotation, tB.position);
+                var transformB = Hulls[tB.GetInstanceID()].Transform;// new RigidTransform(tB.rotation, tB.position);
                 HullDrawingUtility.DrawDebugHull(hullB, transformB, HullDrawingOptions);
 
                 DrawHullCollision(tA.gameObject, tB.gameObject, transformA, hullA, transformB, hullB);
@@ -95,11 +95,11 @@ public class HullTester : MonoBehaviour
                 if (LogCollisions)
                 {
                     var sw1 = System.Diagnostics.Stopwatch.StartNew();
-                    var result1 = HullCollision.IsColliding(transformA, hullA, transformB, hullB);//逐个job调用两两碰撞
+                    var result1 = HullCollision.IsColliding(transformA, hullA, transformB, hullB);
                     sw1.Stop();
 
                     var sw2 = System.Diagnostics.Stopwatch.StartNew();
-                    var result2 = HullOperations.IsColliding.Invoke(transformA, hullA, transformB, hullB);
+                    var result2 = HullOperations.IsColliding.Invoke(transformA, hullA, transformB, hullB);//逐个job调用两两碰撞
                     sw2.Stop();
 
                     Debug.Assert(result1 == result2);
@@ -120,7 +120,7 @@ public class HullTester : MonoBehaviour
         var batchInput = Hulls.Select(t => new BatchCollisionInput
         {
             Id = t.Key,
-            Transform = new RigidTransform(t.Value.Transform.rot, t.Value.Transform.pos),
+            Transform = t.Value.Transform,// new RigidTransform(t.Value.Transform.rot, t.Value.Transform.pos),
             Hull = t.Value.Hull,
 
         }).ToArray();

@@ -9,7 +9,7 @@ public struct TestShape : IBoundingHierarchyNode, IEquatable<TestShape>, ICompar
 {    
     public int Id;
 
-    public RigidTransform Transform;
+    public RigidTransform Transform;//SAT用来世界坐标转换，后续要看看怎么去掉对go的transform依赖，改成传矩阵来变换
 
     //2022 collection 不能NativeHashMap<NativeArray, Node>  NativeHashMap<struct, Node> struct里面有NativeArray也不行
     //2022不予许NativeArray<NativeArray> 要用UnsafeList套UnsafeList
@@ -24,7 +24,7 @@ public struct TestShape : IBoundingHierarchyNode, IEquatable<TestShape>, ICompar
 
     public bool HasChanged => true;//估计是临时的，应该是有发生坐标变更时候返回true
 
-    public float3 Position => Transform.pos;//BVH时候用的
+    public float3 Position => Transform.pos;
 
     public float Radius => BoundingSphere.radius;//BVH时候用的
 
