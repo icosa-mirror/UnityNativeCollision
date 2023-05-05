@@ -82,7 +82,7 @@ namespace Vella.UnityNativeHull
                 hullDef.VerticesNative = cubeVertsNative;
                 hullDef.FaceCount = 6;
                 hullDef.FacesNative = boxFacesNative;
-                SetFromFaces(ref result, hullDef);
+                SetFromFaces(ref result, ref hullDef);
             }
 
             result.IsCreated = true;

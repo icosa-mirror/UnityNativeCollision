@@ -59,7 +59,7 @@ namespace PJNoize
                 hullDef.VerticesNative = vertsNative;
                 hullDef.FaceCount = faceNative.Length;
                 hullDef.FacesNative = faceNative;
-                HullFactory.SetFromFaces(ref result, hullDef);
+                HullFactory.SetFromFaces(ref result, ref hullDef);
             }
 
             result.IsCreated = true;
