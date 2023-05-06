@@ -198,6 +198,8 @@ namespace Vella.UnityNativeHull
 
             var result = new NativeHull();
 
+            //通过分析流程得到多边形的基础数据，然后下面初始化生成碰撞检测系统需要的完整数据，满足检测，求交点等功能
+
             using (var faceNative = new NativeArray<NativeFaceDef>(faceDefs.ToArray(), Allocator.Temp))
             using (var vertsNative = new NativeArray<float3>(uniqueVerts.ToArray(), Allocator.Temp))
             {
@@ -218,7 +220,7 @@ namespace Vella.UnityNativeHull
             return result;
         }
 
-
+        //初始化NativeHull 里面的几个列表数据
         public unsafe static void SetFromFaces(ref NativeHull hull, ref NativeHullDef def)
         {
             Debug.Assert(def.FaceCount > 0);
@@ -247,6 +249,7 @@ namespace Vella.UnityNativeHull
                 f->Edge = -1;
             }
 
+            //初始化完毕，下面开始构建面信息
             CreateFacesPlanes(ref hull, ref def);
 
             var edgeMap = new Dictionary<(int v1, int v2), int>();
