@@ -371,7 +371,26 @@ namespace Vella.UnityNativeHull
                     edgesList[e2] = te2;
                 }
 
+                //修改源码
+                if (singleFace)//单面，模拟连接好剩余边数据到0面，看看后面算法有无问题
+                {
+                    for (int j = 0; j < faceHalfEdges.Count; ++j)
+                    {
+                        int e1 = faceHalfEdges[j];
 
+                        var te1 = edgesList[e1];
+                        var te2 = edgesList[te1.Next];//下一个
+                        var te3 = edgesList[te1.Prev];//上一个
+
+                        var teTwin1 = edgesList[te1.Twin];//拿出
+
+                        teTwin1.Face = 0;//都算到单面0中才能满足，因为只有一个面
+                        teTwin1.Next = te3.Twin;
+                        teTwin1.Prev = te2.Twin;
+
+                        edgesList[te1.Twin] = teTwin1;//值拷贝要重新回填
+                    }
+                }
             }
 
             //最后收尾，把最终数据放入

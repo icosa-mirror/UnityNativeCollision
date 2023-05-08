@@ -1432,7 +1432,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -58408
+  InstanceID: 20568
   ColliderFileName: fan_pivot_bottom
 --- !u!1 &895030710
 GameObject:
@@ -1634,7 +1634,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -58418
+  InstanceID: 20566
   ColliderFileName: cylinder_body
 --- !u!1 &1147465610
 GameObject:
@@ -1815,7 +1815,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -36182
+  InstanceID: 20464
   ColliderFileName: box_pivot_center
 --- !u!1 &1180961463
 GameObject:
@@ -2155,6 +2155,8 @@ MonoBehaviour:
   - {fileID: 2031608367}
   - {fileID: 1147465611}
   - {fileID: 1851690587}
+  - {fileID: 543450652873523819}
+  - {fileID: 2895982747004078285}
   HullDrawingOptions: 128
   DrawIsCollided: 0
   DrawContact: 0
@@ -2176,6 +2178,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 543450652873523819}
   - {fileID: 1670418656}
   - {fileID: 2031608367}
   - {fileID: 1147465611}
@@ -2183,7 +2186,6 @@ Transform:
   - {fileID: 1163877564}
   - {fileID: 2895982747004078285}
   - {fileID: 543450652680307210}
-  - {fileID: 543450652873523819}
   - {fileID: 543450653581742320}
   - {fileID: 6999347530934761433}
   - {fileID: 5318354555562441860}
@@ -3182,7 +3184,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132148949801169}
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.96, y: 0, z: 0}
+  m_LocalPosition: {x: 3.96, y: 0, z: -1.93}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3329,7 +3331,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919132148949801169}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -3441,7 +3443,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2556716766531605111}
   m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.2, y: 0, z: 1.86}
+  m_LocalPosition: {x: 5.365, y: 0, z: -2.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3484,7 +3486,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -58398
+  InstanceID: 20570
   ColliderFileName: sphere
 --- !u!23 &3763227614076383679
 MeshRenderer:
@@ -3554,7 +3556,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2556716766531605111}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -3601,7 +3603,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -58428
+  InstanceID: 20590
   ColliderFileName: circle
 --- !u!33 &4967497186229793317
 MeshFilter:
@@ -3695,7 +3697,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -67424
+  InstanceID: 20612
   ColliderFileName: dragon_slaying_knife
 --- !u!33 &7373793834846268064
 MeshFilter:
@@ -3717,5 +3719,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: -56996
+  InstanceID: 20610
   ColliderFileName: prism_pivot_left_bottom

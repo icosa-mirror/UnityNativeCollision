@@ -9,17 +9,17 @@ namespace Vella.UnityNativeHull
         /// <summary>
         /// The previous edge index in face loop
         /// </summary>
-        public int Prev;
+        public int Prev;//对应的是整个边数据列表hull.EdgesNative的下标
 
         /// <summary>
         /// The next edge index in face loop
         /// </summary>
-        public int Next;
-        
+        public int Next;//对应的是整个边数据列表hull.EdgesNative的下标
+
         /// <summary>
         /// The edge on the other side of this edge (in a different face loop)
         /// </summary>
-        public int Twin;
+        public int Twin;//对应的是整个边数据列表hull.EdgesNative的下标
 
         /// <summary>
         /// The face index of this face loop
@@ -29,7 +29,7 @@ namespace Vella.UnityNativeHull
         /// <summary>
         /// The index of the vertex at the start of this edge.
         /// </summary>
-        public int Origin;
+        public int Origin;//这个边开始的顶点序号，对应hull.VerticesNative 列表的下标
     };
 
 }
