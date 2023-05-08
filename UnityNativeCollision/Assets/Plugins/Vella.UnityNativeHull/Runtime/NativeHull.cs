@@ -13,7 +13,7 @@ namespace Vella.UnityNativeHull
     {
         public int VertexCount;
         public int FaceCount;
-        public int EdgeCount;
+        public int EdgeCount;//这个虽然是说边总数，其实像是顶点总数，矩形为例，应该是12条边，但是这里就是24条，其实是两个边数据表示一条边，所有双倍了
 
         // Native array is currently not Blittable because of DisposeSentinel being a class.
         // Which means you cannot place inside a NativeArray<T>, which batch operations require.

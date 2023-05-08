@@ -24,7 +24,7 @@ namespace Vella.UnityNativeHull
         /// <summary>
         /// The face index of this face loop
         /// </summary>
-        public int Face;
+        public int Face;//是哪一个面，序号对应 hull.Faces面列表的下标
 
         /// <summary>
         /// The index of the vertex at the start of this edge.

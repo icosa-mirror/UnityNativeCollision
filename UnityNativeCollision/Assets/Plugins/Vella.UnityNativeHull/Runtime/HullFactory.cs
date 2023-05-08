@@ -195,7 +195,9 @@ namespace Vella.UnityNativeHull
             }
 
             //将uniqueVerts，faceDefs序列号到json
+            //上面是离线生成数据调用，代码性能开销方面可以有所放松
 
+            //下面是运行时调用
             var result = new NativeHull();
 
             //通过分析流程得到多边形的基础数据，然后下面初始化生成碰撞检测系统需要的完整数据，满足检测，求交点等功能
@@ -252,8 +254,13 @@ namespace Vella.UnityNativeHull
             //初始化完毕，下面开始构建面信息
             CreateFacesPlanes(ref hull, ref def);
 
-            var edgeMap = new Dictionary<(int v1, int v2), int>();
-            var edgesList = new NativeHalfEdge[10000]; // todo lol
+            //开始处理有效边
+            var edgeMap = new Dictionary<(int v1, int v2), int>();//这些边，是共平面的，连接两个平面的外边界的边
+            //var edgesList = new NativeHalfEdge[10000]; // todo lol
+            //修改源码，用字典就不需要预先创建这么大的数组，作者用这么大数组主要是无法统计算法执行过程中，所有面的共边情况，分析比较复杂
+            var edgesList = new Dictionary<int, NativeHalfEdge>();//字典value的struct是值传递，改完要重新值传进去，重新对等改好的value
+            //修改源码，单面的情况，例如圆，扇，方形一个平面多边形
+            bool singleFace = def.FaceCount == 1;
 
             // Loop through all faces.
             for (int i = 0; i < def.FaceCount; ++i)
@@ -273,6 +280,8 @@ namespace Vella.UnityNativeHull
                     int v1 = vertices[j];
                     int v2 = j + 1 < vertCount ? vertices[j + 1] : vertices[0];
 
+                    //每一个面的所有连接边的顶点，按首尾连接，所以按顺序取出，左右key值对，12,21 都要，因为其他连接面的顶点连接顺序可以不同，正反其实都是同一条边
+                    //一个面记录12,21 对应的序号，下一个面就用它，因为是公共的边
                     bool edgeFound12 = edgeMap.TryGetValue((v1, v2), out int iter12);
                     bool edgeFound21 = edgeMap.ContainsKey((v2, v1));
 
@@ -284,46 +293,62 @@ namespace Vella.UnityNativeHull
                         int e12 = iter12;
 
                         // Link adjacent face to edge.
-                        if (edgesList[e12].Face == -1)
+                        if (!edgesList.ContainsKey(e12)) edgesList.Add(e12,new NativeHalfEdge());
+                        var e = edgesList[e12];
+                        if (e.Face == -1)
                         {
-                            edgesList[e12].Face = i;
+                            e.Face = i;
+                            edgesList[e12] = e;
                         }
                         else
                         {
                             throw new Exception("Two shared edges can't have the same vertices in the same order");        
                         }
 
+                        //这里是共边的面
                         if (hull.Faces[i].Edge == -1)
                         {
-                            hull.Faces[i].Edge = e12;
+                            hull.Faces[i].Edge = e12;//设置这个面的开始边序号，对应的是整个边数据列表hull.EdgesNative的下标
                         }
 
-                        faceHalfEdges.Add(e12);
+                        faceHalfEdges.Add(e12);//这里加第一个，就是这边的开始顶点
                     }
                     else
                     {
                         // The next edge of the current half edge in the array is the twin edge.
-                        int e12 = hull.EdgeCount++;
-                        int e21 = hull.EdgeCount++;
+                        int e12 = hull.EdgeCount++;//先用 再+，当前是0，先给了e12=0 ，自己再从0-1
+                        int e21 = hull.EdgeCount++;//结束后是2，e12=0，e21=1
 
                         if (hull.Faces[i].Edge == -1)
                         {
-                            hull.Faces[i].Edge = e12;
+                            hull.Faces[i].Edge = e12;//设置这个面的开始边序号，对应的是整个边数据列表hull.EdgesNative的下标
                         }
 
                         faceHalfEdges.Add(e12);
 
-                        edgesList[e12].Prev = -1;
-                        edgesList[e12].Next = -1;
-                        edgesList[e12].Twin = e21;
-                        edgesList[e12].Face = i;
-                        edgesList[e12].Origin = v1;
+                        if (!edgesList.ContainsKey(e12)) edgesList.Add(e12, new NativeHalfEdge());
+                        var te1 = edgesList[e12];
 
-                        edgesList[e21].Prev = -1;
-                        edgesList[e21].Next = -1;
-                        edgesList[e21].Twin = e12;
-                        edgesList[e21].Face = -1;
-                        edgesList[e21].Origin = v2;
+                        te1.Prev = -1;
+                        te1.Next = -1;
+                        te1.Twin = e21;
+                        te1.Face = i;
+                        te1.Origin = v1;
+
+                        edgesList[e12] = te1;
+
+
+                        if (!edgesList.ContainsKey(e21)) edgesList.Add(e21, new NativeHalfEdge());
+                        var te2 = edgesList[e21];
+
+                        te2.Prev = -1;
+                        te2.Next = -1;
+                        te2.Twin = e12;
+                        te2.Face = -1;
+                        te2.Origin = v2;
+
+                        edgesList[e21] = te2;
+
 
                         // Add edges to map.
                         edgeMap[(v1, v2)] = e12;
@@ -331,19 +356,25 @@ namespace Vella.UnityNativeHull
                     }
                 }
 
+                //一个面的所有顶点检查完，把这个面的边数据设置前后序号，对应的是整个边数据列表hull.EdgesNative的下标
                 // Link the half-edges of the current face.
                 for (int j = 0; j < faceHalfEdges.Count; ++j)
                 {
                     int e1 = faceHalfEdges[j];
                     int e2 = j + 1 < faceHalfEdges.Count ? faceHalfEdges[j + 1] : faceHalfEdges[0];
 
-                    edgesList[e1].Next = e2;
-                    edgesList[e2].Prev = e1;
+                    var te1 = edgesList[e1];
+                    var te2 = edgesList[e2];
+                    te1.Next = e2;
+                    te2.Prev = e1;
+                    edgesList[e1] = te1;
+                    edgesList[e2] = te2;
                 }
 
 
             }
 
+            //最后收尾，把最终数据放入
             hull.EdgesNative = new UnsafeList<NativeHalfEdge>(hull.EdgeCount, Allocator.Persistent);
             for (int j = 0; j < hull.EdgeCount; j++)
             {
@@ -353,11 +384,14 @@ namespace Vella.UnityNativeHull
             hull.Edges = hull.EdgesNative.Ptr;
         }
 
+        //创建所有面数据，计算面法线和距离
         public unsafe static void CreateFacesPlanes(ref NativeHull hull, ref NativeHullDef def)
         {
             //Debug.Assert((IntPtr)hull.facesPlanes != IntPtr.Zero);
             //Debug.Assert(hull.faceCount > 0);
 
+            //把   var faceDefs = new List<NativeFaceDef>();//用共法线和被有效顶点连成的面，不一定是一个三角面的，可能是n个三角面  native 数据
+            //每一个面 转换到 一个NativePlane
             hull.PlanesNative = new UnsafeList<NativePlane>(def.FaceCount, Allocator.Persistent);
             for (int i = 0; i < def.FaceCount; i++)
             {
@@ -398,16 +432,17 @@ namespace Vella.UnityNativeHull
                     centroid += v1;
                 }
 
-                centroid = centroid / vertCount;
+                centroid = centroid / vertCount;//在求得法向量后，还需要求得平面经过的一点V，可以通过计算所有点的平均值，采用来求点V， 就是求这个质心
 
-                hull.Planes[i].Normal = math.normalize(normal);
-                hull.Planes[i].Offset = math.dot(math.normalize(normal), centroid);
+                hull.Planes[i].Normal = math.normalize(normal);//面法线
+                hull.Planes[i].Offset = math.dot(math.normalize(normal), centroid);//距离世界空间原点的距离
 
                 //hull.Planes[i].Normal = math.normalize(normal);
                 //hull.Planes[i].Offset = math.dot(math.normalize(normal), centroid) / vertCount;
             }
 
-            float3 Newell(float3 a, float3 b)
+            //https://zhuanlan.zhihu.com/p/153492326
+            float3 Newell(float3 a, float3 b)//纽维尔公式 Martin Newell提出了一种计算经过多边形的平面的估计方法[1]，求多边形平面的面法线
             {
                 return new float3(
                     (a.y - b.y) * (a.z + b.z),
