@@ -37,7 +37,7 @@ namespace Vella.UnityNativeHull
 
         public float Distance(float3 point)
         {
-            //面法线标准化与否都可以，不影响结果
+            //面法线标准化与否都可以，不影响结果，因为这里是比较距离，不是求面的距离
             return dot(Normal, point) - Offset;//世界空间某一个点，与这个面的距离
         }
 

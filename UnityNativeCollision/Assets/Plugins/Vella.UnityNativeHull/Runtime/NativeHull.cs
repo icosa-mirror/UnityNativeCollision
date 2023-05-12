@@ -101,10 +101,11 @@ namespace Vella.UnityNativeHull
 
         public unsafe float3 GetSupport(float3 direction)
         {
-            return Vertices[GetSupportIndex(direction)];
+            return Vertices[GetSupportIndex(direction)];//最大投影长度的顶点
         }
 
-        public unsafe int GetSupportIndex(float3 direction)
+        //注意这里dot没有对方向进行标准化，这里要默认这个面法线是与这个hull同一个空间，就是外面调用这个函数的逻辑把A转换到B空间来进行距离检查
+        public unsafe int GetSupportIndex(float3 direction)//所有顶点与一个面法线求投影，返回最大投影值的顶点序号
         {
             int index = 0;
             float max = math.dot(direction, Vertices[index]);

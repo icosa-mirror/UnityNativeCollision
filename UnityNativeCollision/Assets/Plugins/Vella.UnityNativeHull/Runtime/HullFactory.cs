@@ -453,8 +453,9 @@ namespace Vella.UnityNativeHull
 
                 centroid = centroid / vertCount;//在求得法向量后，还需要求得平面经过的一点V，可以通过计算所有点的平均值，采用来求点V， 就是求这个质心
 
-                hull.Planes[i].Normal = math.normalize(normal);//面法线
-                hull.Planes[i].Offset = math.dot(math.normalize(normal), centroid);//距离世界空间原点的距离
+                //初始化时候是局部空间的
+                hull.Planes[i].Normal = math.normalize(normal);//面法线 这里算出来是局部空间下的
+                hull.Planes[i].Offset = math.dot(math.normalize(normal), centroid);//距离局部空间下,00原点的距离
 
                 //hull.Planes[i].Normal = math.normalize(normal);
                 //hull.Planes[i].Offset = math.dot(math.normalize(normal), centroid) / vertCount;

@@ -87,26 +87,100 @@ namespace Vella.UnityNativeHull
             return result;
         }
 
+        //面距离判定，能提前检查出两个凸多边形离得较远的情况，就马上返回不相交，这样的算法设计可以提高运算效率
+        //这个算法判定面法线，是用顶点离对方平面的距离，因为凸多边形法线都是往外的特性，只要在平面里面，就表示有顶点插进去，就是相交
         public static unsafe void QueryFaceDistance(out FaceQueryResult result, RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
         {
-            // Perform computations in the local space of the second hull.
-            RigidTransform transform = math.mul(math.inverse(transform2), transform1);
+            // Perform computations in the local space of the second hull. 在第二个hull的局部空间中执行计算。
+            RigidTransform transform = math.mul(math.inverse(transform2), transform1);//把1 转换 2 的局部空间   这个是反方向的变换
+            //这里坐标变化，用了反，导致下面的plane.Normal 要用 -plane.Normal，才是目前1 在 2的局部空间下，真正的面法线方向
 
-            result.Distance = -float.MaxValue;
+            result.Distance = -float.MaxValue;//只要1 有一个面的法线，让2 所有顶点投影下去，最长的，然后这个顶点，离1的这个面法线的面，距离大于，只有一个大于0，就是没有相交
             result.Index = -1;
 
+            //float3 temp = default;
+            //NativePlane tempp = default;
             for (int i = 0; i < hull1.FaceCount; ++i)
             {
-                NativePlane plane = transform * hull1.GetPlane(i);
-                float3 support = hull2.GetSupport(-plane.Normal);
+                //if (i == 0)
+                //    Debug.DrawRay(transform1.pos, hull1.GetPlane(i).Normal, Color.blue);
+                //Debug.DrawLine(transform1.pos, hull1.GetPlane(i).Normal + transform1.pos, Color.blue);//向量平移
+
+                NativePlane plane = transform * hull1.GetPlane(i);//1的每一个平面，初始化是在自己的局部空间，现在 转换到 2的局部空间
+
+                //if (i == 0)
+                //    Debug.DrawRay(transform1.pos, plane.Normal, Color.black);
+                //if (i == 0)
+                //    Debug.DrawRay(transform2.pos, plane.Normal, Color.green);
+                //if (i == 0)
+                //    Debug.DrawRay(transform2.pos, -plane.Normal, Color.red);
+
+                //if (i == 0)
+                //    Debug.DrawRay(transform1.pos, -plane.Normal, Color.red);
+
+
+                //这个1的面法线，已经转换到2，相当是2的局部空间
+                //注意2 的顶点还是局部空间，GetSupport里面是以没有考虑2 自身旋转和缩放的情况下，用局部空间顶点和1 转换来 2的面法线反方向来求最大投影
+                //-plane.Normal  求投影这里，它又是用 正方向的面法线来求，所以是取负，因为上面最开始是反方向变换3
+                //这里不需要考虑2 的自身旋转，因为把1转过来后，保持1自己局部坐标就行，就是需要这样来还原它们在世界关系，这样就可以忽略2的旋转，最终就是为了统一两个的旋转一致，
+                //不需要我之前的设计，考虑两个转到世界，省了一个的转换空间
+                float3 support = hull2.GetSupport(-plane.Normal);//2的每个顶点与 1的每个面 的面法线，求投影，就是与面法线作分离轴求投影  这里得到是最大投影的顶点坐标 
+
+                //if (i == 0)
+                //    Debug.DrawRay(transform2.pos, support, Color.yellow);
+
+
+                //这里是反方向的顶点投影最大，和正方向的面比距离，刚好相差，所以球和圆无线接近时候，对角面就会出现剩余的距离大于0的点，变成锐角时候的投影，也小于0了，所以无线接近就被判定相交了
+
                 float distance = plane.Distance(support);
 
                 if (distance > result.Distance)
                 {
                     result.Distance = distance;
                     result.Index = i;
+                    //temp = support;
+                    //tempp = plane;
                 }
+
+
+                //修改源码
+                //这里1 如果只有一个面，是肯定有问题，要处理下
+                //我只有一个面，一个方向，当2在面另一边时候，无论多远都是，距离都是小于0，所以就会误判，要给他加多一次判定
+                //只有一个面，额外增加这个面的反方向判定
+                //if (hull1.FaceCount == 1)
+                //{
+                //    plane.Normal = -plane.Normal;//取反面
+                //    plane.Offset = -plane.Offset;
+
+                //    if (i == 0)
+                //        Debug.DrawRay(transform1.pos, plane.Normal, Color.black);
+                //    if (i == 0)
+                //        Debug.DrawRay(transform1.pos, -plane.Normal, Color.red);
+
+                //    support = hull2.GetSupport(-plane.Normal);
+
+                //    if (i == 0)
+                //        Debug.DrawRay(transform2.pos, support, Color.yellow);
+
+                //    distance = plane.Distance(support);
+
+                //    if (distance > result.Distance)
+                //    {
+                //        result.Distance = distance;
+                //        result.Index = i;
+                //    }
+                //}
+
+                ///////只有一个面
             }
+
+
+            //Debug.Log(result.Distance);
+            //float dot = math.dot(-tempp.Normal, temp);
+            //Debug.DrawRay(transform1.pos, hull1.GetPlane(result.Index).Normal, Color.gray);
+            //Debug.DrawRay(transform2.pos, tempp.Normal, Color.black);
+            //Debug.Log(dot + "__" + tempp.Offset +"____" + math.dot(tempp.Normal, temp));
+            //Debug.DrawRay(transform2.pos, temp, Color.yellow);
         }
 
         public static unsafe void QueryEdgeDistance(out EdgeQueryResult result, RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
