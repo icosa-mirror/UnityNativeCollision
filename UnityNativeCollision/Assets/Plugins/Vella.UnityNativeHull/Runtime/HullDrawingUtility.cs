@@ -65,7 +65,7 @@ namespace Vella.UnityNativeHull
             }
         }
 
-        public static void DrawDebugHull(NativeHull hull, RigidTransform t, DebugHullFlags options = DebugHullFlags.All, Color BaseColor = default)
+        public static void DrawDebugHull(NativeHull hull, RigidTransform t, float3 localScale, DebugHullFlags options = DebugHullFlags.All, Color BaseColor = default)
         {
             if (!hull.IsValid)
                 throw new ArgumentException("Hull is not valid", nameof(hull));
@@ -90,10 +90,23 @@ namespace Vella.UnityNativeHull
                 var rotatedEdgeNormal = math.rotate(t, edgePlane.Normal);
                 var rotatedTwinNormal = math.rotate(t, twinPlane.Normal);
 
-                var edgeVertex1 = math.transform(t, hull.GetVertex(edge.Origin));
-                var twinVertex1 = math.transform(t, hull.GetVertex(twin.Origin));
-                var edgeVertex2 = math.transform(t, hull.GetVertex(edge.Origin));
-                var twinVertex2 = math.transform(t, hull.GetVertex(twin.Origin));
+                float3x3 f33 = new float3x3();//先做缩放变换，然后再空间变换
+                f33.c0.x = localScale.x;
+                f33.c1.y = localScale.y;
+                f33.c2.z = localScale.z;
+
+                var edgeVertex1 = math.mul(f33, hull.GetVertex(edge.Origin));
+                var twinVertex1 = math.mul(f33, hull.GetVertex(twin.Origin));
+                var edgeVertex2 = math.mul(f33, hull.GetVertex(edge.Origin));
+                var twinVertex2 = math.mul(f33, hull.GetVertex(twin.Origin));
+
+                edgeVertex1 = math.transform(t, edgeVertex1);//顶点从局部空间 变换到 世界坐标空间
+                twinVertex1 = math.transform(t, twinVertex1);
+                edgeVertex2 = math.transform(t, edgeVertex2);
+                twinVertex2 = math.transform(t, twinVertex2);
+
+
+
 
                 if ((options & DebugHullFlags.Outline) != 0)
                 {

@@ -374,17 +374,17 @@ namespace Vella.UnityNativeHull
             C2 = P2 + F2 * E2;
         }
 
-        public static bool NativeHullHullContact(ref NativeManifold result, RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
+        public static bool NativeHullHullContact(ref NativeManifold result, RigidTransform transform1, float3 localScale1, NativeHull hull1, RigidTransform transform2, float3 localScale2, NativeHull hull2)
         {
             FaceQueryResult faceQuery1;
-            HullCollision.QueryFaceDistance(out faceQuery1, transform1, hull1, transform2, hull2);
+            HullCollision.QueryFaceDistance(out faceQuery1, transform1, localScale1, hull1, transform2, localScale2, hull2);
             if (faceQuery1.Distance > 0)
             {
                 return false;
             }
 
             FaceQueryResult faceQuery2;
-            HullCollision.QueryFaceDistance(out faceQuery2, transform2, hull2, transform1, hull1);
+            HullCollision.QueryFaceDistance(out faceQuery2, transform2, localScale2, hull2, transform1, localScale1, hull1);
             if (faceQuery2.Distance > 0)
             {
                 return false;
