@@ -89,7 +89,7 @@ namespace Vella.UnityNativeHull
             return result;
         }
 
-        public static unsafe NativeHull CreateFromMesh(Mesh mesh)
+        public static unsafe NativeHull CreateFromMesh(Mesh mesh, Action<List<NativeFaceDef>, List<float3>> finishCallback = null)
         {
             var faces = new List<DetailedFaceDef>();//未去重的三角面
             var verts = mesh.vertices.Select(RoundVertex).ToArray();//所有顶点，没有处理顶点
@@ -197,6 +197,13 @@ namespace Vella.UnityNativeHull
             //将uniqueVerts，faceDefs序列号到json
             //上面是离线生成数据调用，代码性能开销方面可以有所放松
 
+            //上面有指针，只能函数出栈前把数据外传，只能用callback方式
+            if (finishCallback != null) finishCallback.Invoke(faceDefs, uniqueVerts);
+            return CreateNativeHull(faceDefs, uniqueVerts);
+        }
+
+        public static NativeHull CreateNativeHull(List<NativeFaceDef> faceDefs, List<float3> uniqueVerts)
+        { 
             //下面是运行时调用
             var result = new NativeHull();
 

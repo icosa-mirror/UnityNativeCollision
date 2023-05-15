@@ -1484,6 +1484,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: "\u6247\u5F62_\u591A\u9762_45"
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c9507a81c695cd54191b61fefdc1ef6f,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: c9507a81c695cd54191b61fefdc1ef6f, type: 3}
@@ -1511,7 +1516,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40072
+  InstanceID: 20384
   ColliderFileName: fan_pivot_bottom
 --- !u!1 &579304316
 GameObject:
@@ -1524,7 +1529,6 @@ GameObject:
   - component: {fileID: 579304317}
   - component: {fileID: 579304320}
   - component: {fileID: 579304319}
-  - component: {fileID: 579304318}
   m_Layer: 0
   m_Name: "\u4E2D\u5FC3\u76D2\u5B50 (1)"
   m_TagString: Untagged
@@ -1547,20 +1551,6 @@ Transform:
   m_Father: {fileID: 1235161748}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &579304318
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 579304316}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  InstanceID: 40080
-  ColliderFileName: box_pivot_center
 --- !u!23 &579304319
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2113,7 +2103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40276
+  InstanceID: 20586
   ColliderFileName: cylinder_pivot_center
 --- !u!1 &1147465610
 GameObject:
@@ -2294,7 +2284,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40148
+  InstanceID: 20458
   ColliderFileName: box_pivot_center
 --- !u!1 &1180961463
 GameObject:
@@ -2638,7 +2628,7 @@ MonoBehaviour:
   DrawIntersection: 0
   DrawClosestFace: 0
   DrawClosestPoint: 0
-  LogCollisions: 1
+  LogCollisions: 0
   LogClosestPoint: 0
   LogContact: 0
 --- !u!4 &1235161748
@@ -2830,6 +2820,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: "\u6247\u5F62_\u591A\u9762_60"
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 72f4c27ef7806f149b0d0343ddb45759,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_AddedGameObjects: []
@@ -3854,6 +3849,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: "\u5706_\u591A\u9762"
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: eb3579c7e2c24014ba9adad94fa2e5ab,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: eb3579c7e2c24014ba9adad94fa2e5ab, type: 3}
@@ -3881,7 +3881,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40262
+  InstanceID: 20572
   ColliderFileName: circle
 --- !u!1 &2031608366
 GameObject:
@@ -4289,7 +4289,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40280
+  InstanceID: 20590
   ColliderFileName: sphere
 --- !u!23 &3763227614076383679
 MeshRenderer:
@@ -4486,7 +4486,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40320
+  InstanceID: 20630
   ColliderFileName: dragon_slaying_knife
 --- !u!33 &7373793834846268064
 MeshFilter:
@@ -4508,5 +4508,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36d5dc9c77b2857499fd917b9ceaac78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InstanceID: 40318
+  InstanceID: 20628
   ColliderFileName: prism_pivot_left_bottom

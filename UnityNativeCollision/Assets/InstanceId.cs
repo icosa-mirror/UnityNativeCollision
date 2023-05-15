@@ -45,8 +45,7 @@ public class InstanceIdEditor : UnityEditor.Editor
                 var mf = source.GetComponent<MeshFilter>();
                 if (mf != null && mf.sharedMesh != null)
                 {
-                    var data = PJNoize.NoizeHullFactory.BuildFromMeshToJsonConfig(mf.sharedMesh);
-                    PJNoize.NoizeHullFactory.SaveJsonConfig(source.ColliderFileName, data);
+                    PJNoize.NoizeHullFactory.BuildFromMeshToJsonConfig(mf.sharedMesh, source.ColliderFileName);
                 }
             }
         }
