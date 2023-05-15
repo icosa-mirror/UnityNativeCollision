@@ -104,7 +104,7 @@ public class HullTester : MonoBehaviour
 
                     Debug.Assert(result1 == result2);
 
-                    Debug.Log($"Collisions between '{tA.name}'/'{tB.name}' took: {sw1.Elapsed.TotalMilliseconds:N4}ms (Normal), {sw2.Elapsed.TotalMilliseconds:N4}ms (Burst)");
+                    Debug.Log($"Collisions between '{tA.name}'/'{tB.name}' result :{result1} took: {sw1.Elapsed.TotalMilliseconds:N4}ms (Normal), {sw2.Elapsed.TotalMilliseconds:N4}ms (Burst)");
                 }
             }
         }
@@ -259,9 +259,23 @@ public class HullTester : MonoBehaviour
                     newTransformFound = true;
                     break;
                 }
-                var prevPos = Hulls[t.GetInstanceID()].Position;
+                var prevPos = Hulls[t.GetInstanceID()].Transform.pos;
                 var curPosF3 = (float3)t.position;
                 if (!curPosF3.Equals(prevPos))//坐标变
+                {
+                    newTransformFound = true;
+                    break;
+                }
+                var prevRot = Hulls[t.GetInstanceID()].Transform.rot;
+                var curRotQuater = (quaternion)t.rotation;
+                if (!curRotQuater.Equals(prevRot))//旋转变
+                {
+                    newTransformFound = true;
+                    break;
+                }
+                var prevScale = Hulls[t.GetInstanceID()].Scale;
+                var curScale = (float3)t.localScale;
+                if (!curScale.Equals(prevScale))//大小缩放变
                 {
                     newTransformFound = true;
                     break;
@@ -301,6 +315,7 @@ public class HullTester : MonoBehaviour
             BoundingSphere = sphere,
             Id = t.GetInstanceID(),
             Transform = new RigidTransform(t.rotation, t.position),
+            Scale = t.localScale,
             Hull = hull,
         };
     }
