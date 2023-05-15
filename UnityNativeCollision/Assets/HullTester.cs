@@ -56,7 +56,7 @@ public class HullTester : MonoBehaviour
             var hullA = Hulls[tA.GetInstanceID()].Hull;
             var transformA = Hulls[tA.GetInstanceID()].Transform;// new RigidTransform(tA.rotation, tA.position);
 
-            HullDrawingUtility.DrawDebugHull(hullA, transformA, Hulls[tA.GetInstanceID()].Scale, HullDrawingOptions);
+            HullDrawingUtility.DrawDebugHull(hullA, transformA, HullDrawingOptions);
 
             if (LogClosestPoint)
             {
@@ -88,23 +88,23 @@ public class HullTester : MonoBehaviour
                 
                 var hullB = Hulls[tB.GetInstanceID()].Hull;
                 var transformB = Hulls[tB.GetInstanceID()].Transform;// new RigidTransform(tB.rotation, tB.position);
-                HullDrawingUtility.DrawDebugHull(hullB, transformB, Hulls[tB.GetInstanceID()].Scale, HullDrawingOptions);
+                HullDrawingUtility.DrawDebugHull(hullB, transformB, HullDrawingOptions);
 
-                DrawHullCollision(tA.gameObject, tB.gameObject, transformA, Hulls[tA.GetInstanceID()].Scale, hullA, transformB, Hulls[tB.GetInstanceID()].Scale, hullB);
+                DrawHullCollision(tA.gameObject, tB.gameObject, transformA, hullA, transformB, hullB);
 
                 if (LogCollisions)
                 {
                     var sw1 = System.Diagnostics.Stopwatch.StartNew();
-                    var result1 = HullCollision.IsColliding(transformA, Hulls[tA.GetInstanceID()].Scale, hullA, transformB, Hulls[tB.GetInstanceID()].Scale, hullB);
+                    var result1 = HullCollision.IsColliding(transformA, hullA, transformB, hullB);
                     sw1.Stop();
 
                     var sw2 = System.Diagnostics.Stopwatch.StartNew();
-                    var result2 = HullOperations.IsColliding.Invoke(transformA, Hulls[tA.GetInstanceID()].Scale, hullA, transformB, Hulls[tB.GetInstanceID()].Scale, hullB);//逐个job调用两两碰撞
+                    var result2 = HullOperations.IsColliding.Invoke(transformA, hullA, transformB, hullB);//逐个job调用两两碰撞
                     sw2.Stop();
 
                     Debug.Assert(result1 == result2);
 
-                    Debug.Log($"Collisions between '{tA.name}'/'{tB.name}' result :{result1} took: {sw1.Elapsed.TotalMilliseconds:N4}ms (Normal), {sw2.Elapsed.TotalMilliseconds:N4}ms (Burst)");
+                    Debug.Log($"Collisions between '{tA.name}'/'{tB.name}' took: {sw1.Elapsed.TotalMilliseconds:N4}ms (Normal), {sw2.Elapsed.TotalMilliseconds:N4}ms (Burst)");
                 }
             }
         }
@@ -122,7 +122,6 @@ public class HullTester : MonoBehaviour
             Id = t.Key,
             Transform = t.Value.Transform,// new RigidTransform(t.Value.Transform.rot, t.Value.Transform.pos),
             Hull = t.Value.Hull,
-            LocalScale = t.Value.Scale
 
         }).ToArray();
         //var aaa = new UnsafeList<BatchCollisionInput>(0, Allocator.TempJob);
@@ -156,10 +155,10 @@ public class HullTester : MonoBehaviour
         hulls.Dispose();
     }
 
-    public void DrawHullCollision(GameObject a, GameObject b, RigidTransform t1, float3 localScale1, NativeHull hull1, RigidTransform t2, float3 localScale2, NativeHull hull2)
+    public void DrawHullCollision(GameObject a, GameObject b, RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
     {
 
-        var collision = HullCollision.GetDebugCollisionInfo(t1, localScale1, hull1, t2, localScale2, hull2);
+        var collision = HullCollision.GetDebugCollisionInfo(t1, hull1, t2, hull2);
         if (collision.IsColliding)
         {
             if (DrawIntersection) // Visualize all faces of the intersection
@@ -173,12 +172,12 @@ public class HullTester : MonoBehaviour
                 
                 var sw1 = System.Diagnostics.Stopwatch.StartNew();
                 var tmp = new NativeManifold(Allocator.Persistent);
-                var normalResult = HullIntersection.NativeHullHullContact(ref tmp, t1, localScale1, hull1, t2, localScale2, hull2);
+                var normalResult = HullIntersection.NativeHullHullContact(ref tmp, t1, hull1, t2, hull2);
                 sw1.Stop();
                 tmp.Dispose();
 
                 var sw2 = System.Diagnostics.Stopwatch.StartNew();
-                var burstResult = HullOperations.TryGetContact.Invoke(out NativeManifold manifold, t1, localScale1, hull1, t2, localScale2, hull2);
+                var burstResult = HullOperations.TryGetContact.Invoke(out NativeManifold manifold, t1, hull1, t2, hull2);
                 sw2.Stop();
 
                 if(LogContact)
@@ -260,23 +259,9 @@ public class HullTester : MonoBehaviour
                     newTransformFound = true;
                     break;
                 }
-                var prevPos = Hulls[t.GetInstanceID()].Transform.pos;
+                var prevPos = Hulls[t.GetInstanceID()].Position;
                 var curPosF3 = (float3)t.position;
                 if (!curPosF3.Equals(prevPos))//坐标变
-                {
-                    newTransformFound = true;
-                    break;
-                }
-                var prevRot = Hulls[t.GetInstanceID()].Transform.rot;
-                var curRotQuater = (quaternion)t.rotation;
-                if (!curRotQuater.Equals(prevRot))//旋转变
-                {
-                    newTransformFound = true;
-                    break;
-                }
-                var prevScale = Hulls[t.GetInstanceID()].Scale;
-                var curScale = (float3)t.localScale;
-                if (!curScale.Equals(prevScale))//大小缩放变
                 {
                     newTransformFound = true;
                     break;
@@ -316,7 +301,6 @@ public class HullTester : MonoBehaviour
             BoundingSphere = sphere,
             Id = t.GetInstanceID(),
             Transform = new RigidTransform(t.rotation, t.position),
-            Scale = t.localScale,
             Hull = hull,
         };
     }

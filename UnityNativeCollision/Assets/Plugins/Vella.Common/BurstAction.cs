@@ -8,10 +8,6 @@ using UnityEngine.Bindings;
 
 namespace Vella.Common
 {
-    public interface IBurstRefAction<T1, T2, T3, T4, T5, T6, T7> : IBurstOperation
-    {
-        void Execute(ref T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7);
-    }
 
     public interface IBurstRefAction<T1, T2, T3, T4, T5> : IBurstOperation
     {
@@ -46,64 +42,6 @@ namespace Vella.Common
     public interface IBurstAction : IBurstOperation
     {
         void Execute();
-    }
-
-    [BurstCompile]
-    public struct BurstRefAction<TFunc, T1, T2, T3, T4, T5, T6, T7> : IJob
-        where TFunc : struct, IBurstRefAction<T1, T2, T3, T4, T5, T6, T7>
-        where T1 : unmanaged
-        where T2 : struct
-        where T3 : struct
-        where T4 : struct
-        where T5 : struct
-        where T6 : struct
-        where T7 : struct
-    {
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* FunctionPtr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe T1* Argument1Ptr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* Argument2Ptr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* Argument3Ptr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* Argument4Ptr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* Argument5Ptr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* Argument6Ptr;
-        [NativeDisableUnsafePtrRestriction]
-        public unsafe void* Argument7Ptr;
-
-        public unsafe void Execute()
-        {
-            UnsafeUtility.CopyPtrToStructure(FunctionPtr, out TFunc func);
-            UnsafeUtility.CopyPtrToStructure(Argument2Ptr, out T2 arg2);
-            UnsafeUtility.CopyPtrToStructure(Argument3Ptr, out T3 arg3);
-            UnsafeUtility.CopyPtrToStructure(Argument4Ptr, out T4 arg4);
-            UnsafeUtility.CopyPtrToStructure(Argument5Ptr, out T5 arg5);
-            UnsafeUtility.CopyPtrToStructure(Argument6Ptr, out T6 arg6);
-            UnsafeUtility.CopyPtrToStructure(Argument7Ptr, out T7 arg7);
-
-            func.Execute(ref *Argument1Ptr, arg2, arg3, arg4, arg5, arg6, arg7);
-        }
-
-        public static unsafe void Run(TFunc func, ref T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7)
-        {
-            new BurstRefAction<TFunc, T1, T2, T3, T4, T5, T6, T7>
-            {
-                FunctionPtr = UnsafeUtility.AddressOf(ref func),
-                Argument1Ptr = (T1*)UnsafeUtility.AddressOf(ref arg1),
-                Argument2Ptr = UnsafeUtility.AddressOf(ref arg2),
-                Argument3Ptr = UnsafeUtility.AddressOf(ref arg3),
-                Argument4Ptr = UnsafeUtility.AddressOf(ref arg4),
-                Argument5Ptr = UnsafeUtility.AddressOf(ref arg5),
-                Argument6Ptr = UnsafeUtility.AddressOf(ref arg6),
-                Argument7Ptr = UnsafeUtility.AddressOf(ref arg7),
-
-            }.Run();
-        }
     }
 
     [BurstCompile]

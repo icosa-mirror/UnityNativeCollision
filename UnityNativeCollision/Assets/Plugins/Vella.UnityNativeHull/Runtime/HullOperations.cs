@@ -14,7 +14,6 @@ namespace Vella.UnityNativeHull
         public int Id;
         public RigidTransform Transform;
         public NativeHull Hull;
-        public float3 LocalScale;
     }
 
     public struct BatchCollisionResult
@@ -26,17 +25,17 @@ namespace Vella.UnityNativeHull
     public static class HullOperations
     {
         [BurstCompile]
-        public struct IsColliding : IBurstFunction<RigidTransform, float3, NativeHull, RigidTransform, float3, NativeHull, bool>
+        public struct IsColliding : IBurstFunction<RigidTransform, NativeHull, RigidTransform, NativeHull, bool>
         {
 
-            public bool Execute(RigidTransform t1, float3 localScale1, NativeHull hull1, RigidTransform t2, float3 localScale2, NativeHull hull2)
+            public bool Execute(RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
             {
-                return HullCollision.IsColliding(t1, localScale1, hull1, t2, localScale2, hull2);
+                return HullCollision.IsColliding(t1, hull1, t2, hull2);
             }
 
-            public static bool Invoke(RigidTransform t1, float3 localScale1, NativeHull hull1, RigidTransform t2, float3 localScale2, NativeHull hull2)
+            public static bool Invoke(RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
             {
-                return BurstFunction<IsColliding, RigidTransform, float3, NativeHull, RigidTransform, float3, NativeHull, bool>.Run(Instance, t1, localScale1, hull1, t2, localScale2, hull2);
+                return BurstFunction<IsColliding, RigidTransform, NativeHull, RigidTransform, NativeHull, bool>.Run(Instance, t1, hull1, t2, hull2);
             }
 
             public static IsColliding Instance { get; } = new IsColliding();
@@ -75,26 +74,25 @@ namespace Vella.UnityNativeHull
         }
 
         [BurstCompile]
-        public struct TryGetContact : IBurstRefAction<NativeManifold, RigidTransform, float3, NativeHull, RigidTransform, float3, NativeHull>
+        public struct TryGetContact : IBurstRefAction<NativeManifold, RigidTransform, NativeHull, RigidTransform, NativeHull>
         {
-            public void Execute(ref NativeManifold manifold, RigidTransform t1, float3 localScale1, NativeHull hull1, RigidTransform t2, float3 localScale2, NativeHull hull2)
+            public void Execute(ref NativeManifold manifold, RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
             {
-                HullIntersection.NativeHullHullContact(ref manifold, t1, localScale1, hull1, t2, localScale2, hull2);
+                HullIntersection.NativeHullHullContact(ref manifold, t1, hull1, t2, hull2);
             }
 
-            public static bool Invoke(out NativeManifold result, RigidTransform t1, float3 localScale1, NativeHull hull1, RigidTransform t2, float3 localScale2, NativeHull hull2)
+            public static bool Invoke(out NativeManifold result, RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
             {
                 // Burst Jobs can only allocate as 'temp'
                 result = new NativeManifold(Allocator.Persistent); 
 
-                BurstRefAction<TryGetContact, NativeManifold, RigidTransform, float3, NativeHull, RigidTransform, float3, NativeHull>.Run(Instance, ref result, t1, localScale1, hull1, t2, localScale2, hull2);
+                BurstRefAction<TryGetContact, NativeManifold, RigidTransform, NativeHull, RigidTransform, NativeHull>.Run(Instance, ref result, t1, hull1, t2, hull2);
                 return result.Length > 0;
             }
 
             public static TryGetContact Instance { get; } = new TryGetContact();
         }
 
-        /*
         [BurstCompile]
         public struct TestBatch :IJob
         {
@@ -174,7 +172,6 @@ namespace Vella.UnityNativeHull
                 result.Value = isCollision;
             }
         }
-        */
 
         [BurstCompile]
         public struct CollisionBatch : IBurstFunction<UnsafeList<BatchCollisionInput>, UnsafeList<BatchCollisionResult>, bool>
@@ -189,7 +186,7 @@ namespace Vella.UnityNativeHull
                         var a = hulls[i];
                         var b = hulls[j];
 
-                        if (HullCollision.IsColliding(a.Transform, a.LocalScale, a.Hull, b.Transform, b.LocalScale, b.Hull))
+                        if (HullCollision.IsColliding(a.Transform, a.Hull, b.Transform, b.Hull))
                         {
                             isCollision = true;
                             results.Add(new BatchCollisionResult

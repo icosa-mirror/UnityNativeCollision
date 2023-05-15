@@ -58,15 +58,15 @@ namespace Vella.UnityNativeHull
 
     public class HullCollision
     {
-        public static bool IsColliding(RigidTransform transform1, float3 localScale1, NativeHull hull1, RigidTransform transform2, float3 localScale2, NativeHull hull2)
+        public static bool IsColliding(RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
         {
             FaceQueryResult faceQuery;
 
-            QueryFaceDistance(out faceQuery, transform1, localScale1, hull1, transform2, localScale2, hull2);
+            QueryFaceDistance(out faceQuery, transform1, hull1, transform2, hull2);
             if (faceQuery.Distance > 0)
                 return false;
 
-            QueryFaceDistance(out faceQuery, transform2, localScale2, hull2, transform1, localScale1, hull1);
+            QueryFaceDistance(out faceQuery, transform2, hull2, transform1, hull1);
             if (faceQuery.Distance > 0)
                 return false;
 
@@ -77,11 +77,11 @@ namespace Vella.UnityNativeHull
             return true;
         }
 
-        public static CollisionInfo GetDebugCollisionInfo(RigidTransform transform1, float3 localScale1, NativeHull hull1, RigidTransform transform2, float3 localScale2, NativeHull hull2)
+        public static CollisionInfo GetDebugCollisionInfo(RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
         {
             CollisionInfo result = default;
-            QueryFaceDistance(out result.Face1, transform1, localScale1, hull1, transform2, localScale2, hull2);
-            QueryFaceDistance(out result.Face2, transform2, localScale2, hull2, transform1, localScale1, hull1);
+            QueryFaceDistance(out result.Face1, transform1, hull1, transform2, hull2);
+            QueryFaceDistance(out result.Face2, transform2, hull2, transform1, hull1);
             QueryEdgeDistance(out result.Edge, transform1, hull1, transform2, hull2);
             result.IsColliding = result.Face1.Distance < 0 && result.Face2.Distance < 0 && result.Edge.Distance < 0;
             return result;
@@ -89,7 +89,7 @@ namespace Vella.UnityNativeHull
 
         //面距离判定，能提前检查出两个凸多边形离得较远的情况，就马上返回不相交，这样的算法设计可以提高运算效率
         //这个算法判定面法线，是用顶点离对方平面的距离，因为凸多边形法线都是往外的特性，只要在平面里面，就表示有顶点插进去，就是相交
-        public static unsafe void QueryFaceDistance(out FaceQueryResult result, RigidTransform transform1, float3 localScale1, NativeHull hull1, RigidTransform transform2, float3 localScale2, NativeHull hull2)
+        public static unsafe void QueryFaceDistance(out FaceQueryResult result, RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
         {
             // Perform computations in the local space of the second hull. 在第二个hull的局部空间中执行计算。
             RigidTransform transform = math.mul(math.inverse(transform2), transform1);//把1 转换 2 的局部空间   这个是反方向的变换
@@ -124,7 +124,7 @@ namespace Vella.UnityNativeHull
                 //-plane.Normal  求投影这里，它又是用 正方向的面法线来求，所以是取负，因为上面最开始是反方向变换3
                 //这里不需要考虑2 的自身旋转，因为把1转过来后，保持1自己局部坐标就行，就是需要这样来还原它们在世界关系，这样就可以忽略2的旋转，最终就是为了统一两个的旋转一致，
                 //不需要我之前的设计，考虑两个转到世界，省了一个的转换空间
-                float3 support = hull2.GetSupport(-plane.Normal, localScale2);//2的每个顶点与 1的每个面 的面法线，求投影，就是与面法线作分离轴求投影  这里得到是最大投影的顶点坐标 
+                float3 support = hull2.GetSupport(-plane.Normal);//2的每个顶点与 1的每个面 的面法线，求投影，就是与面法线作分离轴求投影  这里得到是最大投影的顶点坐标 
 
                 //if (i == 0)
                 //    Debug.DrawRay(transform2.pos, support, Color.yellow);
