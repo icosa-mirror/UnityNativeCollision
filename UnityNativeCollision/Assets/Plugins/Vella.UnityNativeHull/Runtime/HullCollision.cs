@@ -70,7 +70,7 @@ namespace Vella.UnityNativeHull
             if (faceQuery.Distance > 0)
                 return false;
 
-            QueryEdgeDistance(out EdgeQueryResult edgeQuery, transform1, localScale1, hull1, transform2, localScale2, hull2);
+            QueryEdgeDistance(out EdgeQueryResult edgeQuery, transform1, hull1, transform2, hull2);
             if (edgeQuery.Distance > 0)
                 return false;
 
@@ -82,7 +82,7 @@ namespace Vella.UnityNativeHull
             CollisionInfo result = default;
             QueryFaceDistance(out result.Face1, transform1, localScale1, hull1, transform2, localScale2, hull2);
             QueryFaceDistance(out result.Face2, transform2, localScale2, hull2, transform1, localScale1, hull1);
-            QueryEdgeDistance(out result.Edge, transform1, localScale1, hull1, transform2, localScale2, hull2);
+            QueryEdgeDistance(out result.Edge, transform1, hull1, transform2, hull2);
             result.IsColliding = result.Face1.Distance < 0 && result.Face2.Distance < 0 && result.Edge.Distance < 0;
             return result;
         }
@@ -183,18 +183,8 @@ namespace Vella.UnityNativeHull
             //Debug.DrawRay(transform2.pos, temp, Color.yellow);
         }
 
-        public static unsafe void QueryEdgeDistance(out EdgeQueryResult result, RigidTransform transform1, float3 localScale1, NativeHull hull1, RigidTransform transform2, float3 localScale2, NativeHull hull2)
+        public static unsafe void QueryEdgeDistance(out EdgeQueryResult result, RigidTransform transform1, NativeHull hull1, RigidTransform transform2, NativeHull hull2)
         {
-            float3x3 f331 = new float3x3();
-            f331.c0.x = localScale1.x;
-            f331.c1.y = localScale1.y;
-            f331.c2.z = localScale1.z;
-
-            float3x3 f332 = new float3x3();
-            f332.c0.x = localScale2.x;
-            f332.c1.y = localScale2.y;
-            f332.c2.z = localScale2.z;
-
             // Perform computations in the local space of the second hull.
             RigidTransform transform = math.mul(math.inverse(transform2), transform1);
 
@@ -211,15 +201,9 @@ namespace Vella.UnityNativeHull
 
                 Debug.Assert(edge1->Twin == i + 1 && twin1->Twin == i);
 
-               // Debug.DrawLine(transform.pos, math.mul(f331, hull1.GetVertex(edge1->Origin)), Color.black);
-               //Debug.DrawLine(transform.pos, math.mul(f331, hull1.GetVertex(twin1->Origin)), Color.red);
-
-                float3 P1 = math.transform(transform, math.mul(f331, hull1.GetVertex(edge1->Origin)));
-                float3 Q1 = math.transform(transform, math.mul(f331, hull1.GetVertex(twin1->Origin)));
+                float3 P1 = math.transform(transform, hull1.GetVertex(edge1->Origin));
+                float3 Q1 = math.transform(transform, hull1.GetVertex(twin1->Origin));
                 float3 E1 = Q1 - P1;
-
-                //Debug.DrawLine(transform.pos, P1, Color.blue);
-                //Debug.DrawLine(transform.pos, Q1, Color.green);
 
                 float3 U1 = math.rotate(transform, hull1.GetPlane(edge1->Face).Normal);
                 float3 V1 = math.rotate(transform, hull1.GetPlane(twin1->Face).Normal);
@@ -231,11 +215,8 @@ namespace Vella.UnityNativeHull
 
                     Debug.Assert(edge2->Twin == j + 1 && twin2->Twin == j);
 
-                    float3 P2 = math.mul(f332, hull2.GetVertex(edge2->Origin));
-                    float3 Q2 = math.mul(f332, hull2.GetVertex(twin2->Origin));
-
-                    //Debug.DrawLine(transform2.pos, P2, Color.black);
-                    //Debug.DrawLine(transform2.pos, Q2, Color.red);
+                    float3 P2 = hull2.GetVertex(edge2->Origin);
+                    float3 Q2 = hull2.GetVertex(twin2->Origin);
                     float3 E2 = Q2 - P2;
                    
                     float3 U2 = hull2.GetPlane(edge2->Face).Normal;
