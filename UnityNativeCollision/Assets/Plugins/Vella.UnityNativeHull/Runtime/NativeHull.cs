@@ -101,22 +101,21 @@ namespace Vella.UnityNativeHull
 
         public unsafe float3 GetSupport(float3 direction, float3 localScale)
         {
-            return Vertices[GetSupportIndex(direction, localScale)];//最大投影长度的顶点
-        }
-
-        //注意这里dot没有对方向进行标准化，这里要默认这个面法线是与这个hull同一个空间，就是外面调用这个函数的逻辑把A转换到B空间来进行距离检查
-        public unsafe int GetSupportIndex(float3 direction, float3 localScale)//所有顶点与一个面法线求投影，返回最大投影值的顶点序号
-        {
             float3x3 f33 = new float3x3();
             f33.c0.x = localScale.x;
             f33.c1.y = localScale.y;
             f33.c2.z = localScale.z;
+            return math.mul(f33, Vertices[GetSupportIndex(direction, f33)]);//最大投影长度的顶点
+        }
 
+        //注意这里dot没有对方向进行标准化，这里要默认这个面法线是与这个hull同一个空间，就是外面调用这个函数的逻辑把A转换到B空间来进行距离检查
+        public unsafe int GetSupportIndex(float3 direction, float3x3 localScaleMat)//所有顶点与一个面法线求投影，返回最大投影值的顶点序号
+        {
             int index = 0;
-            float max = math.dot(direction, math.mul(f33, Vertices[index]));
+            float max = math.dot(direction, math.mul(localScaleMat, Vertices[index]));
             for (int i = 1; i < VertexCount; ++i)
             {
-                float dot = math.dot(direction, math.mul(f33, Vertices[i]));
+                float dot = math.dot(direction, math.mul(localScaleMat, Vertices[i]));
                 if (dot > max)
                 {
                     index = i;

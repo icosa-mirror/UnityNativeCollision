@@ -390,7 +390,7 @@ namespace Vella.UnityNativeHull
                 return false;
             }
          
-            HullCollision.QueryEdgeDistance(out EdgeQueryResult edgeQuery, transform1, hull1, transform2, hull2);
+            HullCollision.QueryEdgeDistance(out EdgeQueryResult edgeQuery, transform1, localScale1, hull1, transform2, localScale2, hull2);
             if (edgeQuery.Distance > 0)
             {
                 return false;
