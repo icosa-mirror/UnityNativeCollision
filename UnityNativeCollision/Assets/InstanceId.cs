@@ -53,7 +53,7 @@ public class InstanceIdEditor : UnityEditor.Editor
         {
             if (source)
             {
-                var hull = PJNoize.NoizeHullFactory.CreateFromJsonConfig(source.ColliderFileName);
+                var hull = PJNoize.NoizeHullFactory.CreateFromJsonConfig(source.ColliderFileName, source.transform.localScale);
                 
                 hull.Dispose();
             }

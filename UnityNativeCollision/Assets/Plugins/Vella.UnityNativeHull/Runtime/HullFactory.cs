@@ -89,7 +89,7 @@ namespace Vella.UnityNativeHull
             return result;
         }
 
-        public static unsafe NativeHull CreateFromMesh(Mesh mesh, Action<List<NativeFaceDef>, List<float3>> finishCallback = null)
+        public static unsafe NativeHull CreateFromMesh(Mesh mesh, Vector3 localScale = default, Action<List<NativeFaceDef>, List<float3>> finishCallback = null)
         {
             var faces = new List<DetailedFaceDef>();//未去重的三角面
             var verts = mesh.vertices.Select(RoundVertex).ToArray();//所有顶点，没有处理顶点
@@ -199,15 +199,28 @@ namespace Vella.UnityNativeHull
 
             //上面有指针，只能函数出栈前把数据外传，只能用callback方式
             if (finishCallback != null) finishCallback.Invoke(faceDefs, uniqueVerts);
-            return CreateNativeHull(faceDefs, uniqueVerts);
+            return CreateNativeHull(faceDefs, uniqueVerts, localScale);
         }
 
-        public static NativeHull CreateNativeHull(List<NativeFaceDef> faceDefs, List<float3> uniqueVerts)
+        public static NativeHull CreateNativeHull(List<NativeFaceDef> faceDefs, List<float3> uniqueVerts, Vector3 localScale = default)
         { 
-            //下面是运行时调用
+            //下面是运行时调用，要注意性能
             var result = new NativeHull();
 
             //通过分析流程得到多边形的基础数据，然后下面初始化生成碰撞检测系统需要的完整数据，满足检测，求交点等功能
+
+            //缩放了所有顶点才需要矩阵转换
+            if (localScale != default)
+            {
+                float3x3 f33 = new float3x3();//先做缩放变换，然后再空间变换
+                f33.c0.x = localScale.x;
+                f33.c1.y = localScale.y;
+                f33.c2.z = localScale.z;
+                for (int i = 0; i < uniqueVerts.Count; i++)
+                {
+                    uniqueVerts[i] = math.mul(f33, uniqueVerts[i]);
+                }
+            }
 
             using (var faceNative = new NativeArray<NativeFaceDef>(faceDefs.ToArray(), Allocator.Temp))
             using (var vertsNative = new NativeArray<float3>(uniqueVerts.ToArray(), Allocator.Temp))

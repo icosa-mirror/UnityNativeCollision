@@ -1544,7 +1544,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 579304316}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.147, y: -0, z: 0}
+  m_LocalPosition: {x: -1.75, y: -0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2215,8 +2215,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1163877563}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0.019, y: 0, z: 0}
+  m_LocalScale: {x: 1.44, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1235161748}
@@ -2621,14 +2621,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Transforms:
   - {fileID: 579304317}
-  - {fileID: 1163877564}
+  - {fileID: 2017498242}
   HullDrawingOptions: 128
   DrawIsCollided: 0
   DrawContact: 0
   DrawIntersection: 0
   DrawClosestFace: 0
   DrawClosestPoint: 0
-  LogCollisions: 0
+  LogCollisions: 1
   LogClosestPoint: 0
   LogContact: 0
 --- !u!4 &1235161748
@@ -3792,7 +3792,7 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: eb3579c7e2c24014ba9adad94fa2e5ab,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.88
+      value: -0.19
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: eb3579c7e2c24014ba9adad94fa2e5ab,
         type: 3}

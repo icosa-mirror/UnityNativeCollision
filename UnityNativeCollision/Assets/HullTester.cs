@@ -331,16 +331,17 @@ public class HullTester : MonoBehaviour
         {
             return HullFactory.CreateFromMesh(meshCollider.sharedMesh);
         }
-        var mf = v.GetComponent<MeshFilter>();
-        if(mf != null && mf.sharedMesh != null)
-        {
-            return HullFactory.CreateFromMesh(mf.sharedMesh);
-        }
         //自己的json
         var temp_fag = v.GetComponent<InstanceId>();
         if (temp_fag != null)
         {
-            return PJNoize.NoizeHullFactory.CreateFromJsonConfig(temp_fag.ColliderFileName);
+            return PJNoize.NoizeHullFactory.CreateFromJsonConfig(temp_fag.ColliderFileName, v.localScale);
+        }
+        /////////
+        var mf = v.GetComponent<MeshFilter>();
+        if (mf != null && mf.sharedMesh != null)
+        {
+            return HullFactory.CreateFromMesh(mf.sharedMesh);
         }
 
         throw new InvalidOperationException($"Unable to create a hull from the GameObject '{v?.name}'");

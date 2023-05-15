@@ -11,7 +11,7 @@ namespace PJNoize
 {
     public class NoizeHullFactory
     {
-        public static unsafe NativeHull CreateFromJsonConfig(string colliderFileName)
+        public static unsafe NativeHull CreateFromJsonConfig(string colliderFileName, Vector3 localScale)
         {
             var configAsset = Resources.Load<TextAsset>(colliderFileName);
             string strs = configAsset.text;
@@ -48,13 +48,13 @@ namespace PJNoize
                 });
             }
 
-            return HullFactory.CreateNativeHull(faceDefs, uniqueVerts);
+            return HullFactory.CreateNativeHull(faceDefs, uniqueVerts, localScale);
         }
         
         //从一个mesh构造需要的数据序列号到json配置
         public static unsafe void BuildFromMeshToJsonConfig(Mesh mesh, string fileName)
         {
-            HullFactory.CreateFromMesh(mesh, (List<HullFactory.NativeFaceDef> faceDefs, List<float3> uniqueVerts) => {
+            var hull = HullFactory.CreateFromMesh(mesh, default, (List<HullFactory.NativeFaceDef> faceDefs, List<float3> uniqueVerts) => {
                 //将uniqueVerts，faceDefs序列号到json
                 var all_uniqueVerts = listVector3("a", uniqueVerts);
                 var all_faceDefs = listFace("b", faceDefs);
@@ -63,6 +63,7 @@ namespace PJNoize
                 //Debug.Log(allDataStr);
                 SaveJsonConfig(fileName, allDataStr);
             });
+            hull.Dispose();//为了适应源码
         }
 
         public class SJsonStruct
