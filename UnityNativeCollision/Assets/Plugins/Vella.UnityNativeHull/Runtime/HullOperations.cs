@@ -35,10 +35,11 @@ namespace Vella.UnityNativeHull
 
             public static bool Invoke(RigidTransform t1, NativeHull hull1, RigidTransform t2, NativeHull hull2)
             {
-                return BurstFunction<IsColliding, RigidTransform, NativeHull, RigidTransform, NativeHull, bool>.Run(Instance, t1, hull1, t2, hull2);
+                return BurstFunction<IsColliding, RigidTransform, NativeHull, RigidTransform, NativeHull, bool>.Run(ref _instance, t1, hull1, t2, hull2);
             }
 
-            public static IsColliding Instance { get; } = new IsColliding();
+            static IsColliding _instance = new IsColliding();
+            //public static IsColliding Instance { get; } = new IsColliding();
         }
 
         [BurstCompile]
@@ -225,7 +226,7 @@ namespace Vella.UnityNativeHull
             }
 
             static CollisionBatch _instance = new CollisionBatch();
-            public static CollisionBatch Instance { get => _instance; }
+            //public static CollisionBatch Instance { get; } = new CollisionBatch();
         }
 
     }

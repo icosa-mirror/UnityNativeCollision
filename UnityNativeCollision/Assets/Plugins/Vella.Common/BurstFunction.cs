@@ -131,7 +131,7 @@ namespace Vella.Common
             UnsafeUtility.CopyStructureToPtr(ref result, ResultPtr);
         }
 
-        public static unsafe TResult Run(TFunc func, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+        public static unsafe TResult Run(ref TFunc func, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
         {
             TResult result = default;
             new BurstFunction<TFunc, T1, T2, T3, T4, TResult>
