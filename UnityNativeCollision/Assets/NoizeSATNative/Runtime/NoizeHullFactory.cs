@@ -11,11 +11,16 @@ namespace PJNoize
 {
     public class NoizeHullFactory
     {
-        public static unsafe NativeHull CreateFromJsonConfig(string colliderFileName, Vector3 localScale)
+        public static NativeHull CreateFromJsonConfig(string colliderFileName, Vector3 localScale)
         {
             var configAsset = Resources.Load<TextAsset>(colliderFileName);
             string strs = configAsset.text;
-            SJsonStruct data = (SJsonStruct)Newtonsoft.Json.JsonConvert.DeserializeObject(strs, typeof(SJsonStruct));
+            return CreateNativeHull(strs, localScale);
+        }
+
+        public static unsafe NativeHull CreateNativeHull(string dataStr, Vector3 localScale)
+        {
+            SJsonStruct data = (SJsonStruct)Newtonsoft.Json.JsonConvert.DeserializeObject(dataStr, typeof(SJsonStruct));
 
             int i, j;
             var uniqueVerts = new List<float3>();
