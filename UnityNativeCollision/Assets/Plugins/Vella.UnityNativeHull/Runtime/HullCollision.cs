@@ -196,17 +196,20 @@ namespace Vella.UnityNativeHull
 
             for (int i = 0; i < hull1.EdgeCount; i += 2)
             {
-                NativeHalfEdge* edge1 = hull1.GetEdgePtr(i);
+                NativeHalfEdge* edge1 = hull1.GetEdgePtr(i);//按照生成hull的逻辑，反方向是在edge1 的i+1 下一个数组下标
                 NativeHalfEdge* twin1 = hull1.GetEdgePtr(i + 1);
 
-                Debug.Assert(edge1->Twin == i + 1 && twin1->Twin == i);
+                Debug.Assert(edge1->Twin == i + 1 && twin1->Twin == i);//twin1是edge1的反方向，顶点头尾调转。edge1->Twin 是下一个i+1，twin1->Twin 是i，就是edge1的反方向 的反方向 是当前i
 
+                //P1, Q1  就是拿到一条边的起止顶点坐标了
                 float3 P1 = math.transform(transform, hull1.GetVertex(edge1->Origin));
                 float3 Q1 = math.transform(transform, hull1.GetVertex(twin1->Origin));
-                float3 E1 = Q1 - P1;
+                float3 E1 = Q1 - P1;//这个就是一条边的方向
 
-                float3 U1 = math.rotate(transform, hull1.GetPlane(edge1->Face).Normal);
-                float3 V1 = math.rotate(transform, hull1.GetPlane(twin1->Face).Normal);
+                //1的面法线都转到2的空间
+                float3 U1 = math.rotate(transform, hull1.GetPlane(edge1->Face).Normal);//edge1 所在的面的面法线
+                float3 V1 = math.rotate(transform, hull1.GetPlane(twin1->Face).Normal);//edge1 的反方向 所在的面的面法线，虽然是同一条边，有可能是连接面用这个边时候，连接顺序是反的
+                //上面是通过边去拿面，反方向的边，作用在于可以拿到共边的面，一条边最多就两个面共它
 
                 for (int j = 0; j < hull2.EdgeCount; j += 2)
                 {
@@ -221,6 +224,7 @@ namespace Vella.UnityNativeHull
                    
                     float3 U2 = hull2.GetPlane(edge2->Face).Normal;
                     float3 V2 = hull2.GetPlane(twin2->Face).Normal;
+                    //2的边，共边两个面法线，跟上面1的同样获取处理
 
                     if (IsMinkowskiFace(U1, V1, -E1, -U2, -V2, -E2))
                     {
@@ -239,8 +243,8 @@ namespace Vella.UnityNativeHull
         
         public static bool IsMinkowskiFace(float3 A, float3 B, float3 B_x_A, float3 C, float3 D, float3 D_x_C)
         {
-            // If an edge pair doesn't build a face on the MD then it isn't a supporting edge.
-
+            // If an edge pair doesn't build a face on the MD then it isn't a supporting edge.如果一边对没有在MD上建立面，那么它就不是支撑边
+            //如果关联的弧AB和CD在高斯图上相交，则两条边在Minkowski和上构建面。
             // Test if arcs AB and CD intersect on the unit sphere 
             float CBA = math.dot(C, B_x_A);
             float DBA = math.dot(D, B_x_A);
@@ -260,7 +264,7 @@ namespace Vella.UnityNativeHull
             float3 E1_x_E2 = math.cross(E1, E2);
 
             // Skip if the edges are significantly parallel to each other.
-            float kTol = 0.005f;
+            float kTol = 1f;//0.005f;//修改源码，暂时未知此魔数意义和整个函数运算的几何意义，为了球和圆柱在某角度下被误判定为不相交
             float L = math.length(E1_x_E2);
             if (L < kTol * math.sqrt(math.lengthsq(E1) * math.lengthsq(E2)))
             {

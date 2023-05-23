@@ -338,6 +338,8 @@ namespace Vella.UnityNativeHull
                         // The next edge of the current half edge in the array is the twin edge.
                         int e12 = hull.EdgeCount++;//先用 再+，当前是0，先给了e12=0 ，自己再从0-1
                         int e21 = hull.EdgeCount++;//结束后是2，e12=0，e21=1
+                        //注意，应该是凸多边形特性，有共边的两个面，边方向必定是大家相反，a面 12  b面 21  都是同一条边，所以这里的EdgeCount必定是连续++两个
+                        //反方向的边必定用得上
 
                         if (hull.Faces[i].Edge == -1)
                         {
